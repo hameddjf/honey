@@ -43,6 +43,7 @@ export const ICON_SPRITE = `
   <symbol id="i-printer" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M6.5 9V4h11v5"/><rect x="3.5" y="9" width="17" height="7.5" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M6.5 14.5h11V20h-11z"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" d="M4 20h16M14.5 4.5l5 5L9 20H4v-5z"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9 20H5.5a1.5 1.5 0 0 1-1.5-1.5V5.5A1.5 1.5 0 0 1 5.5 4H9M15 16l4-4-4-4M19 12H9"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="9.5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M4.5 16.5l4.8-5 3.4 3.4 2.6-2.9 4.7 4.5"/></symbol>
 </svg>
 `;
 

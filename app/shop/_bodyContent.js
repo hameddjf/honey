@@ -118,21 +118,7 @@ const bodyHTML = `
   </div>
 </section>
 
-<section class="container">
-  <div class="shop-toolbar">
-    <p class="shop-count"><strong id="shopCount">۶</strong> محصول یافت شد</p>
-    <label class="shop-sort">
-      مرتب‌سازی:
-      <select id="shopSort">
-        <option value="default">پیش‌فرض</option>
-        <option value="price-asc">ارزان‌ترین</option>
-        <option value="price-desc">گران‌ترین</option>
-      </select>
-    </label>
-  </div>
-
-  <div class="shop-grid" id="shopGrid"></div>
-</section>
+SHOP_PRODUCT_GRID_MARKER
 
 <!-- ============ FOOTER ============ -->
 <footer id="footer">

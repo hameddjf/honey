@@ -3,6 +3,9 @@
 import { useEffect, useRef } from "react";
 import bodyHTML from "./_bodyContent";
 import bodyScript from "./_bodyScript";
+import ProductGrid from "@/components/ProductGrid";
+
+const [beforeGrid, afterGrid] = bodyHTML.split("SHOP_PRODUCT_GRID_MARKER");
 
 export default function ShopPage() {
   const scriptRanRef = useRef(false);
@@ -21,5 +24,11 @@ export default function ShopPage() {
     };
   }, []);
 
-  return <div dangerouslySetInnerHTML={{ __html: bodyHTML }} />;
+  return (
+    <>
+      <div dangerouslySetInnerHTML={{ __html: beforeGrid }} />
+      <ProductGrid variant="shop" />
+      <div dangerouslySetInnerHTML={{ __html: afterGrid }} />
+    </>
+  );
 }

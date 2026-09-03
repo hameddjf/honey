@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ICON_SPRITE, TOPBAR, HEADER, FOOTER, pageHero, commonScript } from "../_shared/chrome";
+import { getSession, logout } from "@/lib/authClient";
 
 const ORDER_HISTORY_KEY = "nika_order_history";
 const LAST_ORDER_KEY = "nika_last_order";
@@ -51,16 +52,26 @@ export default function AccountClient() {
   const [savedMsg, setSavedMsg] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-    setOrders(readJSON(ORDER_HISTORY_KEY, []));
-    const p = readJSON(PROFILE_KEY, DEFAULT_PROFILE);
-    setProfile(p);
-    setProfileDraft(p);
-    setAddresses(readJSON(ADDRESSES_KEY, DEFAULT_ADDRESSES));
+    (async () => {
+      const session = await getSession();
+      if (!session) {
+        window.location.href = "/login?next=/account";
+        return;
+      }
 
-    const params = new URLSearchParams(window.location.search);
-    const initialTab = params.get("tab");
-    if (initialTab && TABS.some((t) => t.id === initialTab)) setTab(initialTab);
+      setOrders(readJSON(ORDER_HISTORY_KEY, []));
+      // پروفایل رو با اطلاعات همون حسابی که واردش شدیم seed می‌کنیم (اگه قبلاً ویرایش نشده باشه)
+      const savedProfile = readJSON(PROFILE_KEY, null);
+      const p = savedProfile || { ...DEFAULT_PROFILE, name: session.name, email: session.email };
+      setProfile(p);
+      setProfileDraft(p);
+      setAddresses(readJSON(ADDRESSES_KEY, DEFAULT_ADDRESSES));
+
+      const params = new URLSearchParams(window.location.search);
+      const initialTab = params.get("tab");
+      if (initialTab && TABS.some((t) => t.id === initialTab)) setTab(initialTab);
+      setMounted(true);
+    })();
   }, []);
 
   useEffect(() => {
@@ -110,7 +121,9 @@ export default function AccountClient() {
     persistAddresses(addresses.filter((a) => a.id !== id));
   };
 
-  const orderStatusFor = (index) => {
+  const orderStatusFor = (order, index) => {
+    if (order.status && STATUS_LABEL[order.status]) return STATUS_LABEL[order.status];
+    // سازگاری با سفارش‌های قدیمی‌تر که فیلد status نداشتن
     if (index === 0) return STATUS_LABEL.processing;
     if (index === 1) return STATUS_LABEL.shipped;
     return STATUS_LABEL.delivered;
@@ -148,7 +161,14 @@ export default function AccountClient() {
                 {t.label}
               </button>
             ))}
-            <button type="button" className="logout" onClick={() => (window.location.href = "/")}>
+            <button
+              type="button"
+              className="logout"
+              onClick={() => {
+                logout();
+                window.location.href = "/";
+              }}
+            >
               <svg className="icon"><use href="#i-logout" /></svg>
               خروج از حساب
             </button>
@@ -186,7 +206,7 @@ export default function AccountClient() {
                 </div>
               ) : (
                 orders.map((o, i) => {
-                  const status = orderStatusFor(i);
+                  const status = orderStatusFor(o, i);
                   return (
                     <div className="order-row" key={o.id}>
                       <div className="oi">

@@ -3,6 +3,9 @@
 import { useEffect, useRef } from "react";
 import bodyHTML from "./_bodyContent";
 import bodyScript from "./_bodyScript";
+import ProductGrid from "@/components/ProductGrid";
+
+const [beforeGrid, afterGrid] = bodyHTML.split("HOME_PRODUCT_GRID_MARKER");
 
 export default function Home() {
   const scriptRanRef = useRef(false);
@@ -24,5 +27,11 @@ export default function Home() {
     };
   }, []);
 
-  return <div dangerouslySetInnerHTML={{ __html: bodyHTML }} />;
+  return (
+    <>
+      <div dangerouslySetInnerHTML={{ __html: beforeGrid }} />
+      <ProductGrid variant="category" limit={6} />
+      <div dangerouslySetInnerHTML={{ __html: afterGrid }} />
+    </>
+  );
 }

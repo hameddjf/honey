@@ -141,38 +141,7 @@ const bodyHTML = `
   <h2 class="section-title">انواع عسل‌های طبیعی نیکا</h2>
   <div class="divider"><span></span><svg class="icon icon-sm"><use href="#i-bee"/></svg><span></span></div>
 
-  <div class="category-grid">
-    <article class="cat-card" data-product="citrus" tabindex="0">
-      <div class="cat-media cat-citrus"><img src="/images/products/citrus.jpg" alt="عسل مرکبات" loading="lazy"><span class="cat-emoji">🍊</span></div>
-      <h3>عسل مرکبات</h3>
-      <a class="cat-dot" href="/product/citrus" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
-    </article>
-    <article class="cat-card" data-product="dark" tabindex="0">
-      <div class="cat-media cat-dark"><img src="/images/products/dark.jpg" alt="عسل سیاه تئو" loading="lazy"><span class="cat-emoji">🍯</span></div>
-      <h3>عسل سیاه تئو</h3>
-      <a class="cat-dot" href="/product/dark" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
-    </article>
-    <article class="cat-card" data-product="forest" tabindex="0">
-      <div class="cat-media cat-forest"><img src="/images/products/forest.jpg" alt="عسل جنگل" loading="lazy"><span class="cat-emoji">🌲</span></div>
-      <h3>عسل جنگل</h3>
-      <a class="cat-dot" href="/product/forest" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
-    </article>
-    <article class="cat-card" data-product="sunflower" tabindex="0">
-      <div class="cat-media cat-sunflower"><img src="/images/products/sunflower.jpg" alt="عسل آفتابگردان" loading="lazy"><span class="cat-emoji">🌻</span></div>
-      <h3>عسل آفتابگردان</h3>
-      <a class="cat-dot" href="/product/sunflower" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
-    </article>
-    <article class="cat-card" data-product="blossom" tabindex="0">
-      <div class="cat-media cat-blossom"><img src="/images/products/blossom.jpg" alt="عسل ترنجبین" loading="lazy"><span class="cat-emoji">🌼</span></div>
-      <h3>عسل ترنجبین</h3>
-      <a class="cat-dot" href="/product/blossom" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
-    </article>
-    <article class="cat-card" data-product="mix" tabindex="0">
-      <div class="cat-media cat-mix"><img src="/images/products/mix.jpg" alt="میکس عسل و ژل رویال" loading="lazy"><span class="cat-emoji">✨</span></div>
-      <h3>میکس عسل و ژل رویال</h3>
-      <a class="cat-dot" href="/product/mix" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
-    </article>
-  </div>
+  HOME_PRODUCT_GRID_MARKER
 </section>
 
 <!-- ============ FEATURES STRIP ============ -->

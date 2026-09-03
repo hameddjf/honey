@@ -78,7 +78,7 @@ export default function CheckoutClient() {
 
   const handleChange = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!form.name.trim() || !form.phone.trim() || !form.city.trim() || !form.address.trim()) {
@@ -88,11 +88,8 @@ export default function CheckoutClient() {
     if (items.length === 0) return;
 
     setSubmitting(true);
-    const now = new Date();
-    const order = {
-      id: "NK-" + now.getTime().toString().slice(-7),
-      date: now.toLocaleDateString("fa-IR"),
-      time: now.toLocaleTimeString("fa-IR"),
+
+    const payload = {
       customer: { ...form },
       payment,
       items: items.map((it) => ({
@@ -109,16 +106,36 @@ export default function CheckoutClient() {
       total,
     };
 
+    let order = null;
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) order = data.order;
+    } catch {
+      // شبکه در دسترس نبود
+    }
+
+    if (!order) {
+      setSubmitting(false);
+      setError("ثبت سفارش با خطا مواجه شد. لطفاً دوباره تلاش کنید.");
+      return;
+    }
+
     try {
       localStorage.setItem(ORDER_KEY, JSON.stringify(order));
-      // هم‌چنین در تاریخچه‌ی سفارش‌های دمو ذخیره می‌کنیم تا در «حساب کاربری» دیده شود
+      // هم‌چنین در تاریخچه‌ی محلی ذخیره می‌کنیم تا در «حساب کاربری» همین مرورگر هم دیده شود
       const historyRaw = localStorage.getItem("nika_order_history");
       const history = historyRaw ? JSON.parse(historyRaw) : [];
       history.unshift(order);
       localStorage.setItem("nika_order_history", JSON.stringify(history.slice(0, 10)));
       localStorage.removeItem(CART_KEY);
     } catch {
-      // ignore storage errors in demo
+      // ignore storage errors
     }
 
     setTimeout(() => router.push("/invoice"), 500);
