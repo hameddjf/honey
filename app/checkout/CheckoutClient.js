@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PRODUCTS } from "@/lib/products";
+import { fetchProductsMap } from "@/lib/productsClient";
 import { ICON_SPRITE, TOPBAR, HEADER, FOOTER, pageHero, commonScript } from "../_shared/chrome";
 
 const CART_KEY = "nika_cart";
@@ -36,6 +36,7 @@ export default function CheckoutClient() {
   const router = useRouter();
   const scriptRanRef = useRef(false);
   const [cart, setCart] = useState(null); // null = loading
+  const [productsMap, setProductsMap] = useState(null); // null = loading
   const [payment, setPayment] = useState("online");
   const [form, setForm] = useState({
     name: "",
@@ -52,6 +53,16 @@ export default function CheckoutClient() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchProductsMap().then((map) => {
+      if (!cancelled) setProductsMap(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (scriptRanRef.current) return;
     scriptRanRef.current = true;
     const script = document.createElement("script");
@@ -62,15 +73,15 @@ export default function CheckoutClient() {
   }, []);
 
   const items = useMemo(() => {
-    if (!cart) return [];
+    if (!cart || !productsMap) return [];
     return cart
       .map(({ key, qty }) => {
-        const p = PRODUCTS[key];
+        const p = productsMap[key];
         if (!p) return null;
         return { key, qty, product: p, lineTotal: priceNum(p.price) * qty };
       })
       .filter(Boolean);
-  }, [cart]);
+  }, [cart, productsMap]);
 
   const subtotal = items.reduce((s, it) => s + it.lineTotal, 0);
   const shipping = items.length === 0 ? 0 : subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIP_COST;
@@ -89,21 +100,17 @@ export default function CheckoutClient() {
 
     setSubmitting(true);
 
+    // Only non-financial fields are sent: the server loads authoritative
+    // prices from D1 and computes subtotal/shipping/total itself. Any price
+    // shown here is for the customer's own review before submitting — it is
+    // not trusted by the server.
     const payload = {
       customer: { ...form },
       payment,
       items: items.map((it) => ({
         key: it.key,
-        title: it.product.title,
-        weight: it.product.weight,
-        image: it.product.image,
         qty: it.qty,
-        price: priceNum(it.product.price),
-        lineTotal: it.lineTotal,
       })),
-      subtotal,
-      shipping,
-      total,
     };
 
     let order = null;
@@ -168,7 +175,7 @@ export default function CheckoutClient() {
         </div>
       </div>
 
-      {cart === null ? null : items.length === 0 ? (
+      {cart === null || productsMap === null ? null : items.length === 0 ? (
         <div className="cart-empty">
           <svg className="icon"><use href="#i-bag" /></svg>
           <h2>سبد خرید شما خالی است</h2>

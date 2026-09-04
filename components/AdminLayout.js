@@ -22,7 +22,7 @@ export default function AdminLayout({ active, children }) {
       if (!admin) {
         setStatus("denied");
         const next = typeof window !== "undefined" ? window.location.pathname : "/nika-x7q2";
-        window.location.href = `/admin/login?next=${encodeURIComponent(next)}`;
+        window.location.href = `/nika-x7q2/login?next=${encodeURIComponent(next)}`;
         return;
       }
       setSession(admin);
