@@ -1,0 +1,10 @@
+# Root-level ignores. backend/.gitignore and frontend/.gitignore still
+# apply to their own subtrees (venv/, node_modules/, media/, db.sqlite3,
+# .next/, etc.) — this file only covers what lives at the repo root.
+
+# The canonical env file (see .env.example for the documented template).
+.env
+
+# OS/editor noise.
+.DS_Store
+Thumbs.db
