@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cardHTML = (key, p) => \`
     <article class="product-card">
       <div class="product-card-media">
-        <a href="/product/\${key}"><img src="\${p.image}" alt="\${p.title}" loading="lazy"></a>
+        <a href="/product/\${key}"><img src="\${p.image}" data-fallback="\${p.fallbackImage || ''}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback;" alt="\${p.title}" loading="lazy"></a>
         \${p.badge ? \`<span class="product-card-badge">\${p.badge}</span>\` : ''}
         <span class="product-card-emoji">\${p.emoji}</span>
       </div>

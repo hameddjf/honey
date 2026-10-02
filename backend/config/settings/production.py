@@ -39,6 +39,11 @@ if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":  # noqa: F
         "resolve to a postgresql:// / postgres:// connection string."
     )
 
+# Render (and most PaaS hosts) terminate TLS at their proxy and forward plain
+# HTTP to gunicorn with X-Forwarded-Proto. Without this, SECURE_SSL_REDIRECT
+# sees every request as insecure and redirects forever.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "true").lower() == "true"
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

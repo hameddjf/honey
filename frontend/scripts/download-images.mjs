@@ -7,15 +7,9 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 
+// تصاویر محصولات اینجا نیستند: آن‌ها از قبل داخل public/images/products قرار دارند و دانلود نمی‌شوند.
 // هر آیتم: مسیر مقصد (همان چیزی که در کد به آن ارجاع داده شده) + آدرس منبع در Pexels
 const IMAGES = [
-  { dest: "images/products/citrus.jpg", src: "https://images.pexels.com/photos/5634205/pexels-photo-5634205.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { dest: "images/products/dark.jpg", src: "https://images.pexels.com/photos/11771949/pexels-photo-11771949.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { dest: "images/products/forest.jpg", src: "https://images.pexels.com/photos/8500502/pexels-photo-8500502.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { dest: "images/products/sunflower.jpg", src: "https://images.pexels.com/photos/23940105/pexels-photo-23940105.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { dest: "images/products/blossom.jpg", src: "https://images.pexels.com/photos/5634212/pexels-photo-5634212.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { dest: "images/products/mix.jpg", src: "https://images.pexels.com/photos/5634203/pexels-photo-5634203.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { dest: "images/products/jar-closeup.jpg", src: "https://images.pexels.com/photos/5634210/pexels-photo-5634210.jpeg?auto=compress&cs=tinysrgb&w=1200" },
   { dest: "images/about-photo.jpg", src: "https://images.pexels.com/photos/8805426/pexels-photo-8805426.jpeg?auto=compress&cs=tinysrgb&w=1200" },
   { dest: "images/blog/spot-fake-honey.jpg", src: "https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=1000" },
   { dest: "images/blog/storage-tips.jpg", src: "https://images.pexels.com/photos/7728087/pexels-photo-7728087.jpeg?auto=compress&cs=tinysrgb&w=1000" },

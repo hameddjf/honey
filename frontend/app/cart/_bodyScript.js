@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const lineTotal = priceNum(p.price) * qty;
       return \`
       <div class="cart-item" data-key="\${key}">
-        <a href="/product/\${key}"><img src="\${p.image}" alt="\${p.title}"></a>
+        <a href="/product/\${key}"><img src="\${p.image}" data-fallback="\${p.fallbackImage || ''}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback;" alt="\${p.title}"></a>
         <div class="cart-item-info">
           <h4><a href="/product/\${key}">\${p.title}</a></h4>
           <span class="tag">\${p.sizeLabel || ''}</span>

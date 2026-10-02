@@ -126,7 +126,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
 <!-- ============ HERO ============ -->
 <section class="hero">
   <div class="hero-visual" aria-hidden="true">
-    <img class="hero-photo" src="${content.hero.image}" alt="" loading="eager">
+    <img class="hero-photo" src="${content.hero.image}" onerror="this.onerror=null;this.src='${DEFAULT_SITE_CONTENT.hero.image}';" alt="" loading="eager">
     <svg class="hero-flower hero-flower-1" viewBox="0 0 60 60"><g fill="#FFFDF6" stroke="#EADFC4" stroke-width="1"><ellipse cx="30" cy="16" rx="9" ry="13"/><ellipse cx="43" cy="24" rx="9" ry="13" transform="rotate(72 43 24)"/><ellipse cx="38" cy="40" rx="9" ry="13" transform="rotate(144 38 40)"/><ellipse cx="22" cy="40" rx="9" ry="13" transform="rotate(216 22 40)"/><ellipse cx="17" cy="24" rx="9" ry="13" transform="rotate(288 17 24)"/></g><circle cx="30" cy="30" r="7" fill="#E8B23D"/></svg>
     <svg class="hero-flower hero-flower-2" viewBox="0 0 60 60"><g fill="#FFFDF6" stroke="#EADFC4" stroke-width="1"><ellipse cx="30" cy="16" rx="9" ry="13"/><ellipse cx="43" cy="24" rx="9" ry="13" transform="rotate(72 43 24)"/><ellipse cx="38" cy="40" rx="9" ry="13" transform="rotate(144 38 40)"/><ellipse cx="22" cy="40" rx="9" ry="13" transform="rotate(216 22 40)"/><ellipse cx="17" cy="24" rx="9" ry="13" transform="rotate(288 17 24)"/></g><circle cx="30" cy="30" r="7" fill="#E8B23D"/></svg>
   </div>
@@ -251,7 +251,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
     </div>
 
     <div class="about-media">
-      <img class="about-photo" src="${videoPoster}" alt="تصویر زنبورداری و تولید عسل نیکا" loading="lazy">
+      <img class="about-photo" src="${videoPoster}" onerror="this.onerror=null;this.src='${DEFAULT_SITE_CONTENT.video.posterImage}';" alt="تصویر زنبورداری و تولید عسل نیکا" loading="lazy">
       <button class="play-btn" data-video-url="${videoUrl}" aria-label="نمایش ویدئو">
         <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="rgba(26,20,12,.4)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#fff" stroke-width="2" opacity=".85"/><svg x="34" y="34" width="32" height="32"><use href="#i-play" fill="#fff"/></svg></svg>
       </button>

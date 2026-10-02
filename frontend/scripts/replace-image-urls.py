@@ -1,20 +1,6 @@
 import os
 
 MAP = {
-    "https://images.pexels.com/photos/5634205/pexels-photo-5634205.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/products/citrus.jpg",
-    "https://images.pexels.com/photos/5634205/pexels-photo-5634205.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/citrus.jpg",
-    "https://images.pexels.com/photos/11771949/pexels-photo-11771949.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/products/dark.jpg",
-    "https://images.pexels.com/photos/11771949/pexels-photo-11771949.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/dark.jpg",
-    "https://images.pexels.com/photos/8500502/pexels-photo-8500502.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/products/forest.jpg",
-    "https://images.pexels.com/photos/8500502/pexels-photo-8500502.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/forest.jpg",
-    "https://images.pexels.com/photos/23940105/pexels-photo-23940105.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/products/sunflower.jpg",
-    "https://images.pexels.com/photos/23940105/pexels-photo-23940105.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/sunflower.jpg",
-    "https://images.pexels.com/photos/5634212/pexels-photo-5634212.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/products/blossom.jpg",
-    "https://images.pexels.com/photos/5634212/pexels-photo-5634212.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/blossom.jpg",
-    "https://images.pexels.com/photos/5634203/pexels-photo-5634203.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/products/mix.jpg",
-    "https://images.pexels.com/photos/5634203/pexels-photo-5634203.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/mix.jpg",
-    "https://images.pexels.com/photos/5634210/pexels-photo-5634210.jpeg?auto=compress&cs=tinysrgb&w=1200": "/images/products/jar-closeup.jpg",
-    "https://images.pexels.com/photos/5634210/pexels-photo-5634210.jpeg?auto=compress&cs=tinysrgb&w=600": "/images/products/jar-closeup.jpg",
     "https://images.pexels.com/photos/8805426/pexels-photo-8805426.jpeg?auto=compress&cs=tinysrgb&w=900": "/images/about-photo.jpg",
     "https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=700": "/images/blog/spot-fake-honey.jpg",
     "https://images.pexels.com/photos/7728087/pexels-photo-7728087.jpeg?auto=compress&cs=tinysrgb&w=700": "/images/blog/storage-tips.jpg",

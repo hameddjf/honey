@@ -19,7 +19,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "باغات مرکبات مازندران",
     "harvest": "بهار",
     "purity": "۱۰۰٪ خالص و تصفیه‌نشده",
-    "image": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
+    "image": "/images/products/citrus.jpg",
+    "imageDetail": "/images/products/citrus-detail.jpg",
     "desc": "عسل مرکبات نیکا از شهد گل‌های پرتقال و نارنج به‌دست می‌آید و طعمی ملایم با رایحه‌ای دل‌نشین دارد. رنگی روشن و بافتی نرم دارد و انتخابی عالی برای صبحانه، چای و نوشیدنی‌های گرم است.",
     "benefits": [
       { "icon": "i-leaf", "label": "سرشار از ویتامین C" },
@@ -40,7 +41,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "کوهستان‌های شمال ایران",
     "harvest": "پاییز",
     "purity": "۱۰۰٪ خالص و تصفیه‌نشده",
-    "image": "https://images.pexels.com/photos/11771949/pexels-photo-11771949.jpeg?cs=srgb&dl=pexels-annmteu-11771949.jpg&fm=jpg",
+    "image": "/images/products/dark.jpg",
+    "imageDetail": "/images/products/dark-detail.jpg",
     "desc": "عسل سیاه تلو با رنگی تیره و طعمی غلیظ، از قوی‌ترین و مقوی‌ترین عسل‌های موجود است. سرشار از املاح معدنی و آنتی‌اکسیدان، انتخابی مناسب برای فصل‌های سرد سال و افرادی است که به دنبال انرژی مضاعف هستند.",
     "benefits": [
       { "icon": "i-shield", "label": "غنی از آنتی‌اکسیدان" },
@@ -59,7 +61,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "جنگل‌های هیرکانی",
     "harvest": "تابستان",
     "purity": "۱۰۰٪ خالص و تصفیه‌نشده",
-    "image": "https://images.pexels.com/photos/11284797/pexels-photo-11284797.jpeg?cs=srgb&dl=pexels-micheile-11284797.jpg&fm=jpg",
+    "image": "/images/products/forest.jpg",
+    "imageDetail": "/images/products/forest-detail.jpg",
     "desc": "عسل نمدار از شهد گل‌های درخت نمدار گردآوری می‌شود و رایحه‌ای خوش و طعمی ملایم با رنگی تیره دارد. این عسل به‌طور سنتی برای آرامش و آسودگی در فصل‌های سرد سال استفاده می‌شود.",
     "benefits": [
       { "icon": "i-leaf", "label": "سرشار از املاح معدنی" },
@@ -78,7 +81,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "مزارع کلزای البرز",
     "harvest": "بهار",
     "purity": "۱۰۰٪ خالص و تصفیه‌نشده",
-    "image": "https://images.pexels.com/photos/8500508/pexels-photo-8500508.jpeg?cs=srgb&dl=pexels-alexfalconer-8500508.jpg&fm=jpg",
+    "image": "/images/products/sunflower.jpg",
+    "imageDetail": "/images/products/sunflower-detail.jpg",
     "desc": "عسل کلزا با رنگی طلایی روشن و طعمی شیرین و ملایم، از مزارع کلزا گردآوری می‌شود. این عسل به دلیل بلوره شدن سریع، بافتی کرمی پیدا می‌کند و منبع خوبی از ویتامین E است.",
     "benefits": [
       { "icon": "i-leaf", "label": "سرشار از ویتامین E" },
@@ -98,7 +102,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "دشت‌های بهاری گیلان",
     "harvest": "بهار",
     "purity": "۱۰۰٪ خالص و تصفیه‌نشده",
-    "image": "https://images.pexels.com/photos/17680083/pexels-photo-17680083.jpeg?cs=srgb&dl=pexels-kamrujjamanjewel-17680083.jpg&fm=jpg",
+    "image": "/images/products/blossom.jpg",
+    "imageDetail": "/images/products/blossom-detail.jpg",
     "desc": "عسل ترنجبین از شهد گل‌های سفید بهاری تهیه می‌شود و طعمی ملایم و خنک با رایحه‌ای دل‌پذیر دارد. به‌طور سنتی برای آرامش دستگاه گوارش و تسکین گلودرد مورد استفاده قرار می‌گیرد.",
     "benefits": [
       { "icon": "i-moon", "label": "آرامش‌بخش دستگاه گوارش" },
@@ -117,7 +122,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "دشت‌های کویری ایران",
     "harvest": "تابستان",
     "purity": "۱۰۰٪ خالص و تصفیه‌نشده",
-    "image": "https://images.pexels.com/photos/5634207/pexels-photo-5634207.jpeg?cs=srgb&dl=pexels-adonyi-foto-5634207.jpg&fm=jpg",
+    "image": "/images/products/khareshtor.jpg",
+    "imageDetail": "/images/products/khareshtor-detail.jpg",
     "desc": "عسل خارشتر از شهد گیاه خارشتر در مناطق کویری ایران گردآوری می‌شود و طعمی متفاوت و اثری گرم دارد. به‌طور سنتی برای آرامش دستگاه گوارش و تسکین سرماخوردگی مورد استفاده قرار می‌گیرد.",
     "benefits": [
       { "icon": "i-moon", "label": "آرامش‌بخش دستگاه گوارش" },
@@ -138,7 +144,8 @@ export const COSMETIC_PRODUCTS = {
     "origin": "تولید داخلی زنبورستان نیکا",
     "harvest": "تمام فصول",
     "purity": "ترکیب طبیعی بدون افزودنی",
-    "image": "https://images.pexels.com/photos/4921856/pexels-photo-4921856.jpeg?cs=srgb&dl=pexels-ekaterinabelinskaya-4921856.jpg&fm=jpg",
+    "image": "/images/products/mix.jpg",
+    "imageDetail": "/images/products/mix-detail.jpg",
     "desc": "ترکیبی ویژه از عسل طبیعی و ژل رویال که بمب انرژی و ایمنی بدن است. این مخلوط با تمرکز بر تقویت سیستم ایمنی و بازیابی سریع، مناسب دوران نقاهت، فصول پرمشغله و ورزشکاران است.",
     "benefits": [
       { "icon": "i-shield", "label": "تقویت قدرتمند ایمنی" },

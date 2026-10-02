@@ -1,6 +1,20 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from .models import BlogPost, MediaAsset, SiteContent, StoreSettings
+
+
+def _absolutize_media(request, value):
+    """
+    Only Django-served uploads (``/media/...``) need the backend host in front.
+    Relative paths such as ``/images/posters/...`` are static files that ship
+    with the Next.js frontend (``frontend/public``) — turning those into
+    ``http://backend/images/...`` makes them 404, so they are left untouched.
+    """
+    media_prefix = "/" + settings.MEDIA_URL.strip("/") + "/"
+    if request and value and value.startswith(media_prefix):
+        return request.build_absolute_uri(value)
+    return value
 
 
 class SiteContentSerializer(serializers.ModelSerializer):
@@ -9,9 +23,7 @@ class SiteContentSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request:
             for field in ("hero_image_url", "video_poster_image_url"):
-                value = data.get(field) or ""
-                if value.startswith("/"):
-                    data[field] = request.build_absolute_uri(value)
+                data[field] = _absolutize_media(request, data.get(field) or "")
         return data
 
     class Meta:
@@ -43,9 +55,7 @@ class BlogPostSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get("request")
-        value = data.get("cover_image_url") or ""
-        if request and value.startswith("/"):
-            data["cover_image_url"] = request.build_absolute_uri(value)
+        data["cover_image_url"] = _absolutize_media(request, data.get("cover_image_url") or "")
         return data
 
     class Meta:

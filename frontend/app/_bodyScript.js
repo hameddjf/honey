@@ -140,6 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const openModal = (key) => {
     const p = PRODUCTS[key];
     if (!p || !modal) return;
+    modalImg.onerror = () => {
+      modalImg.onerror = null;
+      if (p.fallbackImage) modalImg.src = p.fallbackImage;
+    };
     modalImg.src = p.image;
     modalImg.alt = p.title;
     modalEmoji.textContent = p.emoji;
@@ -176,8 +180,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-  document.querySelectorAll('.cat-dot, .cat-media-link').forEach(btn => {
+  // فلش کوچک گوشه‌ی کارت = رفتن به صفحه‌ی کامل محصول (مودال باز نشود)
+  document.querySelectorAll('.cat-dot').forEach(btn => {
     btn.addEventListener('click', (e) => e.stopPropagation());
+  });
+  // کلیک روی تصویر محصول = باز شدن مودال اطلاعات (نه رفتن به صفحه‌ی محصول).
+  // کلیک با Ctrl/Cmd/Shift هنوز لینک را در تب جدید باز می‌کند.
+  document.querySelectorAll('.cat-media-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+        e.stopPropagation();
+        return;
+      }
+      e.preventDefault();
+    });
   });
 
   document.getElementById('modalClose')?.addEventListener('click', closeModal);

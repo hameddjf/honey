@@ -129,7 +129,7 @@ const bodyHTML = `
       <p>امروز نیکا با همکاری چند خانواده‌ی زنبوردار در مناطق مختلف ایران، طیفی از عسل‌های تک‌گل و چندگل رو تولید می‌کنه؛ هرکدوم با طعم و خاصیتی که از منطقه و فصل برداشتش می‌گیره.</p>
     </div>
     <div class="about-story-media">
-      <img src="https://images.pexels.com/photos/5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg" alt="تولید عسل طبیعی نیکا" loading="lazy">
+      <img src="/images/posters/media-bee.jpg" alt="تولید عسل طبیعی نیکا" loading="lazy">
     </div>
   </div>
 </section>

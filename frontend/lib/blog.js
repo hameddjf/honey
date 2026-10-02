@@ -6,7 +6,7 @@ export const BLOG_POSTS = {
     readTime: "۵ دقیقه مطالعه",
     date: "۱۲ خرداد ۱۴۰۴",
     author: "تیم نیکا",
-    image: "https://images.pexels.com/photos/11771949/pexels-photo-11771949.jpeg?cs=srgb&dl=pexels-annmteu-11771949.jpg&fm=jpg",
+    image: "/images/posters/blog-spot-fake-honey.jpg",
     excerpt: "چند روش ساده و خانگی برای بررسی خلوص عسل، پیش از خرید یا در خانه.",
     content: [
       { h: "چرا تشخیص عسل تقلبی مهم است؟" },
@@ -27,7 +27,7 @@ export const BLOG_POSTS = {
     readTime: "۴ دقیقه مطالعه",
     date: "۳ تیر ۱۴۰۴",
     author: "تیم نیکا",
-    image: "https://images.pexels.com/photos/4480158/pexels-photo-4480158.jpeg?cs=srgb&dl=pexels-ian-panelo-4480158.jpg&fm=jpg",
+    image: "/images/posters/blog-storage-tips.jpg",
     excerpt: "دما، نور و نوع ظرف چه تاثیری روی ماندگاری و کیفیت عسل شما دارند؟",
     content: [
       { h: "دمای نگهداری ایده‌آل" },
@@ -46,7 +46,7 @@ export const BLOG_POSTS = {
     readTime: "۳ دقیقه مطالعه",
     date: "۲۰ تیر ۱۴۰۴",
     author: "تیم نیکا",
-    image: "https://images.pexels.com/photos/8500508/pexels-photo-8500508.jpeg?cs=srgb&dl=pexels-alexfalconer-8500508.jpg&fm=jpg",
+    image: "/images/posters/blog-crystallization.jpg",
     excerpt: "بلوره‌شدن یک فرآیند کاملاً طبیعی است؛ توضیح می‌دهیم چرا و چطور برگردانیمش.",
     content: [
       { h: "بلوره‌شدن یعنی چه؟" },
@@ -65,7 +65,7 @@ export const BLOG_POSTS = {
     readTime: "۶ دقیقه مطالعه",
     date: "۸ مرداد ۱۴۰۴",
     author: "تیم نیکا",
-    image: "https://images.pexels.com/photos/11284797/pexels-photo-11284797.jpeg?cs=srgb&dl=pexels-micheile-11284797.jpg&fm=jpg",
+    image: "/images/posters/blog-cooking-with-honey.jpg",
     excerpt: "نسبت‌های پیشنهادی و نکاتی برای استفاده از عسل در پخت و نوشیدنی‌های گرم.",
     content: [
       { h: "چرا عسل جایگزین بهتری است؟" },
@@ -84,7 +84,7 @@ export const BLOG_POSTS = {
     readTime: "۷ دقیقه مطالعه",
     date: "۱ شهریور ۱۴۰۴",
     author: "تیم نیکا",
-    image: "https://images.pexels.com/photos/4921856/pexels-photo-4921856.jpeg?cs=srgb&dl=pexels-ekaterinabelinskaya-4921856.jpg&fm=jpg",
+    image: "/images/posters/blog-honey-types.jpg",
     excerpt: "از طعم گرفته تا خواص؛ با معیارهای انتخاب نوع عسل مناسب شما آشنا شوید.",
     content: [
       { h: "عسل تک‌گل چیست؟" },
@@ -103,7 +103,7 @@ export const BLOG_POSTS = {
     readTime: "۵ دقیقه مطالعه",
     date: "۱۵ شهریور ۱۴۰۴",
     author: "تیم نیکا",
-    image: "https://images.pexels.com/photos/5634207/pexels-photo-5634207.jpeg?cs=srgb&dl=pexels-adonyi-foto-5634207.jpg&fm=jpg",
+    image: "/images/posters/blog-honey-cinnamon.jpg",
     excerpt: "بررسی علمی ادعاهای رایج درباره این ترکیب محبوب در طب سنتی.",
     content: [
       { h: "این ترکیب از کجا آمده؟" },

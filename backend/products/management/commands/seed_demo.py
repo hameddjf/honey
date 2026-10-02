@@ -11,9 +11,11 @@ duplicating them. Works against a fresh SQLite database and, after
 `migrate`, equally against Postgres (nothing here is SQLite-specific).
 """
 
+import time
 from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 from io import BytesIO
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 from django.contrib.auth import get_user_model
@@ -361,34 +363,92 @@ BLOG_POSTS = [
 ]
 
 
-# Real public Pexels photography used by seed_demo.
-# The command downloads, validates, converts and stores these images locally in
-# Django MEDIA_ROOT so ProductImage / MediaAsset records point at real local
-# files instead of broken static placeholders or remote hotlinks.
-REAL_IMAGE_SOURCES = {
-    # Product photography (all honey-focused)
-    "citrus-primary": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
-    "citrus-detail": "https://images.pexels.com/photos/10819687/pexels-photo-10819687.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "sunflower-primary": "https://images.pexels.com/photos/8500508/pexels-photo-8500508.jpeg?cs=srgb&dl=pexels-alexfalconer-8500508.jpg&fm=jpg",
-    "sunflower-detail": "https://images.pexels.com/photos/8140790/pexels-photo-8140790.jpeg?cs=srgb&dl=pexels-micheile-8140790.jpg&fm=jpg",
-    "dark-primary": "https://images.pexels.com/photos/7990484/pexels-photo-7990484.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "dark-detail": "https://images.pexels.com/photos/30666803/pexels-photo-30666803.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "forest-primary": "https://images.pexels.com/photos/18581552/pexels-photo-18581552.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "forest-detail": "https://images.pexels.com/photos/12370134/pexels-photo-12370134.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "khareshtor-primary": "https://images.pexels.com/photos/35042437/pexels-photo-35042437.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "khareshtor-detail": "https://images.pexels.com/photos/35042436/pexels-photo-35042436.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "blossom-primary": "https://images.pexels.com/photos/18581553/pexels-photo-18581553.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "blossom-detail": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
-    "mix-primary": "https://images.pexels.com/photos/10819687/pexels-photo-10819687.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "mix-detail": "https://images.pexels.com/photos/12370134/pexels-photo-12370134.jpeg?auto=compress&cs=tinysrgb&w=1600",
+# ---------------------------------------------------------------------------
+# Real photos (products + posters)
+# ---------------------------------------------------------------------------
+# `python manage.py seed_demo` DOWNLOADS every photo below once and stores it
+# inside the project, so afterwards nothing is hotlinked:
+#
+#   1. backend/products/seed_images/downloaded/<key>.jpg   (download cache —
+#      a re-run reuses these files instead of downloading again; delete a
+#      file, or pass --refresh, to fetch it again; drop your own photo here
+#      with the same name to override a download)
+#   2. frontend/public/images/products/<slug>.jpg|<slug>-detail.jpg and
+#      frontend/public/images/posters/<key>.jpg   (served by Next.js — these
+#      are the exact paths the storefront already references)
+#   3. Django MEDIA_ROOT (ProductImage / MediaAsset rows) for the API/admin
+#
+# To change a photo, edit its URL list below (the first URL that downloads
+# wins; the following ones are fallbacks) and run `seed_demo --refresh`.
+SEED_IMAGES_DIR = Path(__file__).resolve().parents[2] / "seed_images"      # bundled offline fallbacks
+ASSETS_CACHE_DIR = SEED_IMAGES_DIR / "downloaded"                          # download cache
+FRONTEND_PUBLIC_DIR = Path(__file__).resolve().parents[4] / "frontend" / "public"
 
-    # General content/media library photography
-    "media-hero": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
-    "media-about": "https://images.pexels.com/photos/5247983/pexels-photo-5247983.jpeg?cs=srgb&dl=pexels-anete-lusina-5247983.jpg&fm=jpg",
-    "media-blog": "https://images.pexels.com/photos/18581553/pexels-photo-18581553.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "media-bee": "https://images.pexels.com/photos/5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg",
-    "media-contact": "https://images.pexels.com/photos/8140790/pexels-photo-8140790.jpeg?cs=srgb&dl=pexels-micheile-8140790.jpg&fm=jpg",
-    "media-festival": "https://images.pexels.com/photos/30666803/pexels-photo-30666803.jpeg?auto=compress&cs=tinysrgb&w=1600",
+_PX = "https://images.pexels.com/photos/"
+PEXELS_URLS = {
+    "8140790": _PX + "8140790/pexels-photo-8140790.jpeg?cs=srgb&dl=pexels-micheile-8140790.jpg&fm=jpg",
+    "5247983": _PX + "5247983/pexels-photo-5247983.jpeg?cs=srgb&dl=pexels-anete-lusina-5247983.jpg&fm=jpg",
+    "5247982": _PX + "5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg",
+    "18751139": _PX + "18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
+    "18581553": _PX + "18581553/pexels-photo-18581553.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "30666803": _PX + "30666803/pexels-photo-30666803.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "1638280": _PX + "1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "6551047": _PX + "6551047/pexels-photo-6551047.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "8805426": _PX + "8805426/pexels-photo-8805426.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "11771949": _PX + "11771949/pexels-photo-11771949.jpeg?cs=srgb&dl=pexels-annmteu-11771949.jpg&fm=jpg",
+    "4480158": _PX + "4480158/pexels-photo-4480158.jpeg?cs=srgb&dl=pexels-ian-panelo-4480158.jpg&fm=jpg",
+    "8500508": _PX + "8500508/pexels-photo-8500508.jpeg?cs=srgb&dl=pexels-alexfalconer-8500508.jpg&fm=jpg",
+    "11284797": _PX + "11284797/pexels-photo-11284797.jpeg?cs=srgb&dl=pexels-micheile-11284797.jpg&fm=jpg",
+    "4921856": _PX + "4921856/pexels-photo-4921856.jpeg?cs=srgb&dl=pexels-ekaterinabelinskaya-4921856.jpg&fm=jpg",
+    "5634207": _PX + "5634207/pexels-photo-5634207.jpeg?cs=srgb&dl=pexels-adonyi-foto-5634207.jpg&fm=jpg",
+}
+
+
+def _urls(*photo_ids):
+    return [PEXELS_URLS[photo_id] for photo_id in photo_ids]
+
+
+# Product photo candidates, per stable slug (first one that downloads wins).
+# The "detail" (close-up) image of each product is generated from its main
+# photo as a zoomed crop, unless you place <slug>-detail.jpg in the cache dir.
+PRODUCT_PHOTO_SOURCES = {
+    "citrus": _urls("8140790", "1638280"),
+    "sunflower": _urls("18751139", "8140790"),
+    "dark": _urls("18581553", "30666803"),
+    "forest": _urls("30666803", "5247983"),
+    "khareshtor": _urls("5247983", "6551047"),
+    "blossom": _urls("1638280", "18581553"),
+    "mix": _urls("5247982", "8805426"),
+}
+
+# Where on the main photo the close-up crop is centred (x, y as 0..1 fractions).
+DETAIL_CROP_ANCHORS = {
+    "citrus": (0.50, 0.55),
+    "sunflower": (0.40, 0.50),
+    "dark": (0.55, 0.50),
+    "forest": (0.45, 0.60),
+    "khareshtor": (0.60, 0.45),
+    "blossom": (0.50, 0.40),
+    "mix": (0.45, 0.55),
+}
+
+# Posters / banners / blog covers. Key -> candidate URLs. The key is also the
+# file name (frontend/public/images/posters/<key>.jpg).
+POSTER_SOURCES = {
+    # general content / media library (also stored as MediaAsset rows)
+    "media-hero": _urls("18751139"),
+    "media-about": _urls("5247983"),
+    "media-blog": _urls("18581553"),
+    "media-bee": _urls("5247982"),            # also the intro-video poster
+    "media-contact": _urls("8140790"),
+    "media-festival": _urls("30666803"),
+    # blog covers used by the storefront (frontend/lib/blog.js)
+    "blog-spot-fake-honey": _urls("11771949"),
+    "blog-storage-tips": _urls("4480158"),
+    "blog-crystallization": _urls("8500508"),
+    "blog-cooking-with-honey": _urls("11284797"),
+    "blog-honey-types": _urls("4921856"),
+    "blog-honey-cinnamon": _urls("5634207"),
 }
 
 MEDIA_ASSETS = [
@@ -410,13 +470,31 @@ BLOG_MEDIA_KEYS = {
 }
 
 
-def _download_real_image(source_url, *, timeout=30, max_size=10 * 1024 * 1024):
-    request = Request(source_url, headers={"User-Agent": "NikaHoneySeed/1.0"})
-    try:
-        with urlopen(request, timeout=timeout) as response:
-            payload = response.read(max_size + 1)
-    except Exception as exc:
-        raise CommandError(f"Could not download seed image: {source_url}\n{exc}") from exc
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 NikaHoneySeed/2.0"
+    ),
+    "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+}
+
+
+def _download_real_image(source_url, *, timeout=30, max_size=10 * 1024 * 1024, retries=3):
+    """Download one photo and return it as optimized JPEG bytes (max 1800px)."""
+    payload = None
+    last_error = None
+    for attempt in range(1, retries + 1):
+        try:
+            request = Request(source_url, headers=_BROWSER_HEADERS)
+            with urlopen(request, timeout=timeout) as response:
+                payload = response.read(max_size + 1)
+            break
+        except Exception as exc:  # network / HTTP errors — retry with backoff
+            last_error = exc
+            if attempt < retries:
+                time.sleep(attempt)
+    if payload is None:
+        raise CommandError(f"Could not download seed image: {source_url}\n{last_error}") from last_error
 
     if len(payload) > max_size:
         raise CommandError(f"Seed image is too large (>10MB): {source_url}")
@@ -431,27 +509,203 @@ def _download_real_image(source_url, *, timeout=30, max_size=10 * 1024 * 1024):
         raise CommandError(f"Downloaded seed asset is not a valid image: {source_url}\n{exc}") from exc
 
 
+def _make_detail_crop(jpeg_bytes, anchor):
+    """A zoomed close-up crop of a photo (used as the product's 2nd image)."""
+    try:
+        image = Image.open(BytesIO(jpeg_bytes)).convert("RGB")
+        width, height = image.size
+        side = int(min(width, height) * 0.62)
+        center_x, center_y = int(width * anchor[0]), int(height * anchor[1])
+        left = max(0, min(width - side, center_x - side // 2))
+        top = max(0, min(height - side, center_y - side // 2))
+        crop = image.crop((left, top, left + side, top + side))
+        crop = crop.resize((1200, 1200), Image.Resampling.LANCZOS)
+        out = BytesIO()
+        crop.save(out, format="JPEG", quality=88, optimize=True)
+        return out.getvalue()
+    except Exception:
+        return jpeg_bytes  # not a decodable photo (e.g. mocked in tests) — reuse as-is
+
+
+def _load_local_seed_image(name):
+    """Read an image that ships inside the project (offline fallback)."""
+    path = SEED_IMAGES_DIR / name
+    if not path.is_file():
+        raise CommandError(f"Missing bundled seed image: {path}")
+    payload = path.read_bytes()
+    try:
+        Image.open(BytesIO(payload)).verify()
+    except Exception as exc:
+        raise CommandError(f"Bundled seed image is not a valid image: {path}\n{exc}") from exc
+    return payload
+
+
+def _save_to_frontend(relative_path, payload):
+    """Copy a downloaded photo into frontend/public so Next.js serves it from the project."""
+    if not FRONTEND_PUBLIC_DIR.is_dir():
+        return False
+    target = FRONTEND_PUBLIC_DIR / relative_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(payload)
+    return True
+
+
 def _media_url(file_field):
     value = file_field.url if file_field else ""
     return "/" + value.lstrip("/") if value else ""
 
 
 class Command(BaseCommand):
-    help = "Populate ALL development/demo data (categories, products, images, users, orders, content, blog)."
+    help = (
+        "Populate ALL development/demo data (categories, products, users, orders, content, blog) and "
+        "download the real product photos + posters into the project."
+    )
 
-    @transaction.atomic
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--refresh",
+            action="store_true",
+            help="Re-download every photo/poster and replace the seeded images with the new files.",
+        )
+        parser.add_argument(
+            "--offline",
+            action="store_true",
+            help="Do not download anything: use the files already in the download cache (or the bundled fallbacks).",
+        )
+        parser.add_argument(
+            "--no-uploads",
+            action="store_true",
+            help=(
+                "Do not create ProductImage / MediaAsset rows (files under MEDIA_ROOT). Use this when seeding "
+                "a deployed database (e.g. Neon + Render) whose backend has no persistent media storage: the "
+                "storefront then uses the static images shipped in frontend/public/images."
+            ),
+        )
+        parser.add_argument(
+            "--strict",
+            action="store_true",
+            help="Fail instead of falling back to bundled illustrations when a download does not work.",
+        )
+
     def handle(self, *args, **options):
-        category_map = self._seed_categories()
-        products_by_slug = self._seed_products(category_map)
-        self._seed_product_images(products_by_slug)
-        demo_user = self._seed_users()
-        self._seed_orders(demo_user, products_by_slug)
-        media_map = self._seed_media()
-        self._seed_content(media_map)
-        self._seed_blog(media_map)
-        self._seed_settings()
-        self._seed_addresses(demo_user)
+        # Downloads run BEFORE the DB transaction so a slow network never holds
+        # a database lock, and a failed download can never leave half-seeded rows.
+        self.refresh = options["refresh"]
+        self.offline = options["offline"]
+        self.strict = options["strict"]
+        self.no_uploads = options["no_uploads"]
+        assets = self._prepare_assets()
+
+        with transaction.atomic():
+            category_map = self._seed_categories()
+            products_by_slug = self._seed_products(category_map)
+            if not self.no_uploads:
+                self._seed_product_images(products_by_slug, assets)
+            demo_user = self._seed_users()
+            self._seed_orders(demo_user, products_by_slug)
+            media_map = {} if self.no_uploads else self._seed_media(assets)
+            self._seed_content(media_map)
+            self._seed_blog(media_map)
+            self._seed_settings()
+            self._seed_addresses(demo_user)
         self.stdout.write(self.style.SUCCESS("Seed data is up to date."))
+
+    # ------------------------------------------------------------------
+    # Photo download / cache layer
+    # ------------------------------------------------------------------
+
+    def _fetch_photo(self, key, urls):
+        """
+        Return (bytes, source) where source is "cache" | "download" | None.
+        Order: cached file in the project -> download (first working URL).
+        """
+        cache_path = ASSETS_CACHE_DIR / f"{key}.jpg"
+        if cache_path.is_file() and not self.refresh:
+            return cache_path.read_bytes(), "cache"
+        if self.offline:
+            return None, None
+        for url in urls:
+            try:
+                payload = _download_real_image(url)
+            except CommandError as exc:
+                self.stderr.write(self.style.WARNING(f"  ! {key}: {str(exc).splitlines()[0]}"))
+                continue
+            ASSETS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            cache_path.write_bytes(payload)
+            self.stdout.write(f"  downloaded: {key} ({len(payload) // 1024} KB)")
+            return payload, "download"
+        return None, None
+
+    def _prepare_assets(self):
+        """
+        Download (or reuse from the project cache) every product photo and
+        poster, and publish them to frontend/public. Returns
+        {"products": {slug: {"primary": bytes, "detail": bytes, "is_photo": bool}},
+         "posters": {key: bytes}}.
+        """
+        products, posters = {}, {}
+        missing = []
+        published = 0
+
+        for slug, urls in PRODUCT_PHOTO_SOURCES.items():
+            primary, source = self._fetch_photo(f"product-{slug}-primary", urls)
+            if primary is None:
+                missing.append(f"product-{slug}")
+                products[slug] = {
+                    "primary": _load_local_seed_image(f"{slug}-primary.jpg"),
+                    "detail": _load_local_seed_image(f"{slug}-detail.jpg"),
+                    "is_photo": False,
+                }
+                continue
+
+            detail_path = ASSETS_CACHE_DIR / f"product-{slug}-detail.jpg"
+            if detail_path.is_file() and not self.refresh:
+                detail = detail_path.read_bytes()
+            else:
+                detail = _make_detail_crop(primary, DETAIL_CROP_ANCHORS[slug])
+                ASSETS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                detail_path.write_bytes(detail)
+            products[slug] = {"primary": primary, "detail": detail, "is_photo": True}
+            published += _save_to_frontend(f"images/products/{slug}.jpg", primary)
+            published += _save_to_frontend(f"images/products/{slug}-detail.jpg", detail)
+
+        for key, urls in POSTER_SOURCES.items():
+            payload, source = self._fetch_photo(key, urls)
+            if payload is None:
+                # Fall back to whatever poster file the frontend already ships.
+                placeholder = FRONTEND_PUBLIC_DIR / "images" / "posters" / f"{key}.jpg"
+                if placeholder.is_file():
+                    payload = placeholder.read_bytes()
+                missing.append(key)
+                if payload is not None:
+                    posters[key] = payload
+                continue
+            posters[key] = payload
+            published += _save_to_frontend(f"images/posters/{key}.jpg", payload)
+
+        if missing and self.strict:
+            raise CommandError(
+                "Could not download: " + ", ".join(missing) + ". Check your internet connection "
+                "(or the URLs at the top of seed_demo.py) and run again."
+            )
+        if missing:
+            self.stderr.write(
+                self.style.WARNING(
+                    f"  ! {len(missing)} image(s) could not be downloaded and use the bundled fallbacks: "
+                    + ", ".join(missing)
+                    + ". Run `python manage.py seed_demo` again when the network works "
+                    "(use --refresh to force)."
+                )
+            )
+        self.stdout.write(
+            self._status_line(
+                "photos",
+                f"{len(PRODUCT_PHOTO_SOURCES)} products + {len(POSTER_SOURCES)} posters; "
+                f"{published} file(s) written to frontend/public/images",
+                published > 0,
+            )
+        )
+        return {"products": products, "posters": posters}
 
     # ------------------------------------------------------------------
     # Categories / products / images
@@ -491,60 +745,69 @@ class Command(BaseCommand):
             self.stdout.write(self._status_line("product", product.name, created))
         return products_by_slug
 
-    def _seed_product_images(self, products_by_slug):
+    def _seed_product_images(self, products_by_slug, assets):
         """
-        Give each seeded product two real local photos downloaded from public
-        Pexels sources. Existing staff-managed images are preserved. Legacy
-        placeholder images created by older seed_demo versions are replaced.
+        Give each seeded product two photos (main + close-up) taken from the
+        photos downloaded into the project (see _prepare_assets) and copy
+        them into MEDIA_ROOT as ProductImage rows. Staff-managed images are
+        never touched. Images from older seed_demo versions (generated
+        illustrations / previously downloaded photos) are replaced once by
+        the new photos; re-running is a no-op (use --refresh to force).
         """
         created_count = 0
         replaced_count = 0
         for stable_slug, product in products_by_slug.items():
             existing = list(product.images.all())
-            legacy = [
-                image for image in existing
-                if image.image and image.image.name.split("/")[-1] in {
+            asset = assets["products"][stable_slug]
+
+            def _name(image):
+                return image.image.name.split("/")[-1] if image.image else ""
+
+            def _is_seed_managed(image):
+                name = _name(image)
+                return name.startswith(("seed-photo-", "seed-local-", "seed-real-")) or name in {
                     f"{stable_slug}-primary.jpg",
                     f"{stable_slug}-detail.jpg",
                 }
-            ]
 
-            # If real/non-seed images already exist, never overwrite them.
-            non_legacy = [image for image in existing if image not in legacy]
-            if non_legacy:
+            managed = [image for image in existing if _is_seed_managed(image)]
+
+            # Anything else means a staff upload: never overwrite it.
+            if len(managed) != len(existing):
+                continue
+            already_photos = any(_name(image).startswith("seed-photo-") for image in managed)
+            if managed and already_photos and not self.refresh:
+                continue
+            # Download failed this time but the product already has images: keep them.
+            if managed and not asset["is_photo"]:
                 continue
 
-            if not existing or legacy:
-                for image in legacy:
-                    image.image.delete(save=False)
-                    image.delete()
-                    replaced_count += 1
+            for image in managed:
+                image.image.delete(save=False)
+                image.delete()
+                replaced_count += 1
 
-                primary_key = f"{stable_slug}-primary"
-                detail_key = f"{stable_slug}-detail"
-                primary_bytes = _download_real_image(REAL_IMAGE_SOURCES[primary_key])
-                detail_bytes = _download_real_image(REAL_IMAGE_SOURCES[detail_key])
-
-                ProductImage.objects.create(
-                    product=product,
-                    image=ContentFile(primary_bytes, name=f"seed-real-{stable_slug}-primary.jpg"),
-                    alt_text=f"{product.name} — تصویر اصلی",
-                    sort_order=0,
-                    is_primary=True,
-                )
-                ProductImage.objects.create(
-                    product=product,
-                    image=ContentFile(detail_bytes, name=f"seed-real-{stable_slug}-detail.jpg"),
-                    alt_text=f"{product.name} — نمای نزدیک",
-                    sort_order=1,
-                    is_primary=False,
-                )
-                created_count += 1
+            prefix = "seed-photo" if asset["is_photo"] else "seed-local"
+            ProductImage.objects.create(
+                product=product,
+                image=ContentFile(asset["primary"], name=f"{prefix}-{stable_slug}-primary.jpg"),
+                alt_text=f"{product.name} — تصویر اصلی",
+                sort_order=0,
+                is_primary=True,
+            )
+            ProductImage.objects.create(
+                product=product,
+                image=ContentFile(asset["detail"], name=f"{prefix}-{stable_slug}-detail.jpg"),
+                alt_text=f"{product.name} — نمای نزدیک",
+                sort_order=1,
+                is_primary=False,
+            )
+            created_count += 1
 
         self.stdout.write(
             self._status_line(
                 "product images",
-                f"{created_count} product(s) seeded with real photos; {replaced_count} legacy placeholder(s) replaced",
+                f"{created_count} product(s) seeded with downloaded photos; {replaced_count} old image(s) replaced",
                 created_count > 0 or replaced_count > 0,
             )
         )
@@ -635,7 +898,7 @@ class Command(BaseCommand):
             content.hero_subtitle = "مستقیم از کندو تا خانه‌ی شما"
             changed = True
         if not content.hero_image_url or content.hero_image_url.startswith("/images/"):
-            content.hero_image_url = _media_url(media_map["media-hero"].file)
+            content.hero_image_url = "/images/posters/media-hero.jpg"
             changed = True
         if not content.topbar_message:
             content.topbar_message = "ارسال رایگان برای خریدهای بالای ۱ میلیون تومان"
@@ -673,7 +936,7 @@ class Command(BaseCommand):
             content.video_embed_url = "https://www.pexels.com/video/honey-bees-on-a-honeycomb-6872488/"
             changed = True
         if not content.video_poster_image_url or content.video_poster_image_url.startswith("/images/"):
-            content.video_poster_image_url = _media_url(media_map["media-about"].file)
+            content.video_poster_image_url = "/images/posters/media-about.jpg"
             changed = True
 
         if changed:
@@ -689,7 +952,8 @@ class Command(BaseCommand):
         changed_count = 0
         for post_data in BLOG_POSTS:
             media_key = BLOG_MEDIA_KEYS[post_data["slug"]]
-            cover_url = _media_url(media_map[media_key].file)
+            # Static file shipped with the Next.js frontend — works on any host, no media storage needed.
+            cover_url = f"/images/posters/{media_key}.jpg"
             post, created = BlogPost.objects.update_or_create(
                 slug=post_data["slug"],
                 defaults={
@@ -723,22 +987,27 @@ class Command(BaseCommand):
     # Media library
     # ------------------------------------------------------------------
 
-    def _seed_media(self):
-        """Create/update deterministic general media with real local files."""
+    def _seed_media(self, assets):
+        """Create/update the general media library from the downloaded posters."""
         media_map = {}
         created_count = 0
         updated_count = 0
 
         for asset_data in MEDIA_ASSETS:
             key = asset_data["key"]
-            real_filename = f"seed-real-{key}.jpg"
+            payload = assets["posters"].get(key)
+            if payload is None:
+                raise CommandError(
+                    f"Poster '{key}' is not available (download failed and there is no local copy). "
+                    "Check your internet connection and run `python manage.py seed_demo` again."
+                )
+            real_stem = f"seed-real-{key}"
+            real_filename = f"{real_stem}.jpg"
             asset = MediaAsset.objects.filter(label=asset_data["label"]).first()
-            desired_bytes = None
 
             if asset is None:
-                desired_bytes = _download_real_image(REAL_IMAGE_SOURCES[key])
                 asset = MediaAsset.objects.create(
-                    file=ContentFile(desired_bytes, name=real_filename),
+                    file=ContentFile(payload, name=real_filename),
                     label=asset_data["label"],
                     tag=asset_data["tag"],
                     alt_text=asset_data["alt_text"],
@@ -747,27 +1016,25 @@ class Command(BaseCommand):
                 created_count += 1
             else:
                 current_name = asset.file.name.split("/")[-1] if asset.file else ""
-                if current_name.startswith("seed-real-") or current_name.startswith("media-asset") or current_name.startswith("seed-"):
-                    # Existing seed-generated/demo media can be safely upgraded
-                    # to the real-photo files. User-uploaded files are preserved
-                    # when their names do not match a known seed-generated file.
-                    if current_name != real_filename:
-                        desired_bytes = _download_real_image(REAL_IMAGE_SOURCES[key])
-                        if asset.file:
-                            asset.file.delete(save=False)
-                        asset.file.save(real_filename, ContentFile(desired_bytes), save=False)
-                        asset.tag = asset_data["tag"]
-                        asset.alt_text = asset_data["alt_text"]
-                        asset.is_active = True
-                        asset.save()
-                        updated_count += 1
+                seed_managed = current_name.startswith(("seed-real-", "media-asset", "seed-"))
+                already_current = current_name.startswith(real_stem)
+                # User-uploaded files (names that don't look like seed files) are preserved.
+                if seed_managed and (not already_current or self.refresh):
+                    if asset.file:
+                        asset.file.delete(save=False)
+                    asset.file.save(real_filename, ContentFile(payload), save=False)
+                    asset.tag = asset_data["tag"]
+                    asset.alt_text = asset_data["alt_text"]
+                    asset.is_active = True
+                    asset.save()
+                    updated_count += 1
 
             media_map[key] = asset
 
         self.stdout.write(
             self._status_line(
                 "media assets",
-                f"{len(MEDIA_ASSETS)} real asset(s), {created_count} created, {updated_count} upgraded",
+                f"{len(MEDIA_ASSETS)} downloaded poster(s), {created_count} created, {updated_count} upgraded",
                 created_count > 0 or updated_count > 0,
             )
         )

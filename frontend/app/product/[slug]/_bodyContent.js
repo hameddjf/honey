@@ -136,7 +136,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
         <span class="stars">
           <svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg>
         </span>
-        <span>۴.۸ از ۵ (۱۲۴ نظر)</span>
+        <span id="pdRatingText">۴.۸ از ۵</span>
       </div>
       <div class="pd-price-row">
         <span class="pd-price" id="pdPrice"></span><small>تومان</small>
@@ -170,29 +170,74 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
   <div class="pd-tab-buttons">
     <button class="active" data-tab="desc">توضیحات کامل</button>
     <button data-tab="spec">مشخصات محصول</button>
-    <button data-tab="reviews">نظرات کاربران (۱۲۴)</button>
+    <button data-tab="reviews" id="pdReviewsTabBtn">نظرات کاربران</button>
   </div>
   <div class="pd-tab-panel active" id="tab-desc"><p id="pdFullDesc"></p></div>
   <div class="pd-tab-panel" id="tab-spec">
     <table class="spec-table" id="specTable"></table>
   </div>
   <div class="pd-tab-panel" id="tab-reviews">
-    <div class="testi-card" style="margin-bottom:14px; max-width:640px">
-      <div class="testi-top"><div class="stars"><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg></div></div>
-      <p>عسلش خیلی خوش‌طعم و خالصه، بسته‌بندیش هم شیک بود. حتماً باز سفارش می‌دم.</p>
-      <div class="testi-user"><span class="avatar">م</span><span class="testi-user-info"><strong>مریم احمدی</strong><small>اصفهان</small></span></div>
+    <div class="rv-subtabs" role="tablist" aria-label="بخش نظرات">
+      <button type="button" class="rv-subtab active" data-rv="list" role="tab" aria-selected="true">نظرات دریافتی <span class="rv-count" id="rvCount">۰</span></button>
+      <button type="button" class="rv-subtab" data-rv="form" role="tab" aria-selected="false">ثبت نظر جدید</button>
     </div>
-    <div class="testi-card" style="max-width:640px">
-      <div class="testi-top"><div class="stars"><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg></div></div>
-      <p>ارسال سریع بود و کیفیت عسل با توضیحات سایت کاملاً مطابقت داشت.</p>
-      <div class="testi-user"><span class="avatar">ر</span><span class="testi-user-info"><strong>رضا کریمی</strong><small>مشهد</small></span></div>
+
+    <div class="rv-panel active" id="rv-list" role="tabpanel">
+      <div class="rv-summary" id="rvSummary"></div>
+      <div class="rv-list" id="rvList"></div>
+    </div>
+
+    <div class="rv-panel" id="rv-form" role="tabpanel">
+      <form class="rv-form" id="rvForm" novalidate>
+        <h4>نظر خود را درباره‌ی این محصول بنویسید</h4>
+        <div class="rv-field">
+          <label>امتیاز شما</label>
+          <div class="rv-star-pick" id="rvStarPick" role="radiogroup" aria-label="امتیاز">
+            <button type="button" data-value="1" aria-label="۱ ستاره"><svg class="icon"><use href="#i-star"/></svg></button>
+            <button type="button" data-value="2" aria-label="۲ ستاره"><svg class="icon"><use href="#i-star"/></svg></button>
+            <button type="button" data-value="3" aria-label="۳ ستاره"><svg class="icon"><use href="#i-star"/></svg></button>
+            <button type="button" data-value="4" aria-label="۴ ستاره"><svg class="icon"><use href="#i-star"/></svg></button>
+            <button type="button" data-value="5" aria-label="۵ ستاره"><svg class="icon"><use href="#i-star"/></svg></button>
+          </div>
+        </div>
+        <div class="rv-row">
+          <div class="rv-field">
+            <label for="rvName">نام شما</label>
+            <input type="text" id="rvName" maxlength="40" placeholder="مثلاً: سارا محمدی" autocomplete="name">
+          </div>
+          <div class="rv-field">
+            <label for="rvCity">شهر (اختیاری)</label>
+            <input type="text" id="rvCity" maxlength="30" placeholder="مثلاً: شیراز">
+          </div>
+        </div>
+        <div class="rv-field">
+          <label for="rvText">متن نظر</label>
+          <textarea id="rvText" rows="5" maxlength="600" placeholder="تجربه‌ی خود را از طعم، کیفیت و بسته‌بندی بنویسید..."></textarea>
+        </div>
+        <p class="rv-error" id="rvError" role="alert" hidden></p>
+        <button type="submit" class="btn btn-gold"><span>ثبت نظر</span></button>
+      </form>
     </div>
   </div>
 </section>
 
-<section class="container" style="padding-bottom:80px">
-  <h2 class="section-title related-heading" style="font-size:24px; text-align:right">محصولات مرتبط</h2>
-  <div class="shop-grid" id="relatedGrid"></div>
+<section class="container related-section" style="padding-bottom:80px">
+  <div class="related-head">
+    <div class="related-titles">
+      <span class="related-eyebrow">پیشنهاد نیکا</span>
+      <h2 class="section-title related-heading" style="font-size:26px; text-align:right">محصولات پیشنهادی</h2>
+      <p class="related-sub">طعم‌های دیگری که شاید به آن‌ها علاقه‌مند شوید</p>
+    </div>
+    <div class="slider-nav">
+      <span class="slider-counter" id="relCounter" aria-live="polite"></span>
+      <button type="button" class="slider-btn" id="relPrev" aria-label="قبلی"><svg class="icon"><use href="#i-chev-right"/></svg></button>
+      <button type="button" class="slider-btn" id="relNext" aria-label="بعدی"><svg class="icon"><use href="#i-chev-left"/></svg></button>
+    </div>
+  </div>
+  <div class="related-slider" id="relSlider">
+    <div class="related-track" id="relatedGrid" tabindex="0" role="region" aria-roledescription="اسلایدر" aria-label="محصولات پیشنهادی"></div>
+  </div>
+  <div class="rel-progress" id="relProgress" role="presentation"><span class="rel-progress-thumb" id="relThumb"></span></div>
 </section>
 
 <div class="pd-mobile-cta">

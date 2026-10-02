@@ -77,11 +77,14 @@ export function mergeCosmetic(product) {
   // uploaded for them yet in /admin/products.
   const apiImages = Array.isArray(product.images) ? product.images : [];
   const sortedApiImages = [...apiImages].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
+  // Local (same-domain) images shipped in /public/images/products — these are
+  // used when the product has no uploaded images yet, and as a safety net
+  // (see data-fallback / onerror in the page templates) if an uploaded image's
+  // URL fails to load (e.g. backend media not reachable).
+  const fallbackImages = [cosmetic.image, cosmetic.imageDetail].filter(Boolean);
   const images = sortedApiImages.length
     ? sortedApiImages.map((img) => img.url)
-    : cosmetic.image
-      ? [cosmetic.image]
-      : [];
+    : fallbackImages;
   return {
     ...cosmetic,
     id: product.id,
@@ -108,6 +111,8 @@ export function mergeCosmetic(product) {
     // cosmetic image only when the product has none yet.
     images,
     image: images[0] || cosmetic.image,
+    fallbackImage: cosmetic.image || "",
+    fallbackImages,
   };
 }
 

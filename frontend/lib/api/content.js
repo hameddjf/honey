@@ -37,10 +37,27 @@ function normalizeUrl(value) {
   return value;
 }
 
+/**
+ * پوسترها: اگر بک‌اند آدرس مطلق به یک فایل استاتیک فرانت‌اند داده باشد
+ * (مثل http://127.0.0.1:8000/images/posters/x.jpg) میزبان را حذف می‌کنیم تا از
+ * خود Next.js (public/images) لود شود؛ مقدار خالی هم undefined می‌شود تا
+ * تصویر پیش‌فرض جایگزین نشود.
+ */
+export function localizeImageUrl(value) {
+  if (!value || typeof value !== "string") return undefined;
+  try {
+    const u = new URL(value, "http://placeholder.local");
+    if (u.pathname.startsWith("/images/")) return u.pathname;
+  } catch {
+    /* ignore */
+  }
+  return value;
+}
+
 /** Backend SiteContent -> a partial patch of the local shape (merge onto DEFAULT_SITE_CONTENT). */
 export function fromBackendPayload(data) {
   return {
-    hero: { title: data.hero_title, desc: data.hero_subtitle, image: data.hero_image_url },
+    hero: { title: data.hero_title, desc: data.hero_subtitle, image: localizeImageUrl(data.hero_image_url) },
     topbar: { message: data.topbar_message, active: !!data.topbar_is_active },
     footer: {
       email: data.contact_email,
@@ -55,7 +72,7 @@ export function fromBackendPayload(data) {
     video: {
       label: data.video_label,
       embedUrl: data.video_embed_url,
-      posterImage: data.video_poster_image_url,
+      posterImage: localizeImageUrl(data.video_poster_image_url),
     },
   };
 }

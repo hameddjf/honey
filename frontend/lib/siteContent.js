@@ -26,14 +26,14 @@ export const DEFAULT_SITE_CONTENT = {
   hero: {
     title: "عسل طبیعی نیکا",
     desc: "عسل خالص، بدون افزودنی، مستقیم از طبیعت\nبرای سلامتی شما و عزیزانتان",
-    image: "https://images.pexels.com/photos/4480158/pexels-photo-4480158.jpeg?cs=srgb&dl=pexels-ian-panelo-4480158.jpg&fm=jpg",
+    image: "/images/posters/media-hero.jpg",
     ctaLabel: "مشاهده محصولات",
     ctaHref: "/shop",
   },
   video: {
     label: "نمایش ویدئو",
     embedUrl: "",
-    posterImage: "https://images.pexels.com/photos/5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg",
+    posterImage: "/images/posters/media-bee.jpg",
   },
   promo: {
     enabled: false,
