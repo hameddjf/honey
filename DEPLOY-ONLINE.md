@@ -82,7 +82,9 @@ curl https://honey-388l.onrender.com/api/v1/content/
 ---
 
 ## ۳) فرانت روی Cloudflare
-نکته‌ی کلیدی: `NEXT_PUBLIC_API_URL` در زمان **build** داخل کد قرار می‌گیرد. فایل `.env` ریشه مقدار لوکال (127.0.0.1) دارد، اما مقداری که از قبل در محیط تنظیم شده باشد را overwrite نمی‌کند.
+نکته‌ی کلیدی: `NEXT_PUBLIC_API_URL` موقع **build** داخل کد قرار می‌گیرد. فایل `.env` ریشه مقدار لوکال (127.0.0.1) دارد، اما مقداری که از قبل در همان پنجره‌ی CMD ست شده باشد را overwrite نمی‌کند (تست شد: بعد از build هیچ ردی از 127.0.0.1 نیست).
+
+اگر نسخه‌ی v2 جدید (این zip) را باز کرده‌اید، vinext از قبل تنظیم شده و فقط این لازم است:
 
 ```cmd
 cd nika-honey-project\frontend
@@ -90,24 +92,38 @@ set "NEXT_PUBLIC_API_URL=https://honey-388l.onrender.com/api/v1"
 set "NEXT_PUBLIC_SITE_URL=https://nika-honey.kj1378242.workers.dev"
 npm install
 npx wrangler login
-npx vinext check
-npx vinext init
 npm run build:vinext
 npx @vinext/cloudflare deploy
 ```
 
-- اگر پروژه‌ی `nika-honey` را قبلاً در Cloudflare ساخته‌اید، همان نام را نگه دارید تا آدرس `nika-honey.kj1378242.workers.dev` عوض نشود.
-- اگر Cloudflare را به Git وصل کرده‌اید: Settings → Variables and Secrets (بخش **Build**) → دو متغیر بالا را اضافه کنید و دوباره deploy بگیرید.
-- اگر vinext خطا داد: بخش «روش جایگزین OpenNext» در `frontend/DEPLOY-CLOUDFLARE.md`.
+اگر همچنان روی پوشه‌ی قبلی خودتان کار می‌کنید (که `vinext init` در آن خطای ERESOLVE داد):
 
----
+```cmd
+npm install -D vinext react-server-dom-webpack@19.2.8 @vinext/cloudflare @cloudflare/workers-response-store
+npx vinext init --platform cloudflare --cdn-cache none --image-optimization none --skip-check
+npm install -D @vitejs/plugin-rsc@^0.5.34
+```
+سپس همان چهار دستور آخر (`set`، `wrangler login`، `build:vinext`، `deploy`) را بزنید.
+
+علت خطا: `react-server-dom-webpack` به‌صورت پیش‌فرض نسخه‌ی 19.3.0 را می‌خواست که React 19.3 لازم دارد، ولی پروژه روی React 19.2.8 است؛ پین کردن روی 19.2.8 مشکل را حل می‌کند. `@vitejs/plugin-rsc` هم جداگانه نصب نمی‌شد و همان چیزی بود که deploy می‌گفت Missing است.
+
+درباره‌ی سوال‌های `vinext init`: سایت از `next/image` استفاده نمی‌کند، پس cache، Cloudflare Images و pre-warm لازم نیست. جواب ساده‌تر (none) کمتر خراب می‌شود.
+
+- اگر پروژه‌ی `nika-honey` را قبلاً در Cloudflare ساخته‌اید، همان نام می‌ماند و آدرس `nika-honey.kj1378242.workers.dev` عوض نمی‌شود.
+- اگر Cloudflare را به Git وصل کرده‌اید: Settings → Variables and Secrets (بخش **Build**) → دو متغیر بالا را اضافه کنید، Build command را `npm run build:vinext` بگذارید و دوباره deploy بگیرید.
+
+> **مهم (رفع خطای ۱۰۰۲۱ — `No such module "__vinext_action_owner_manifest.js"`):** در `frontend/vite.config.ts` پلاگین Cloudflare باید دقیقاً به شکل `cloudflare({ viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] } })` باشد، نه `cloudflare()` ساده. در این نسخه درست تنظیم شده؛ `npm run build:vinext` و `npm run deploy:vinext` خودشان بررسی می‌کنند و در صورت خراب بودن، پیش از آپلود با پیام روشن متوقف می‌شوند. دیپلوی پیشنهادی: `npm run build:vinext` و بعد `npm run deploy:vinext`. توضیح کامل: `DEPLOY_FIX_REPORT.md`.
 
 ## ۴) عیب‌یابی سریع
 | علامت | علت | راه‌حل |
 |---|---|---|
 | خطای CORS در کنسول مرورگر | آدرس فرانت در `CORS_ALLOWED_ORIGINS` نیست یا `/` آخرش دارد | دقیقاً `https://nika-honey.kj1378242.workers.dev` بدون اسلش |
 | سایت به `127.0.0.1` درخواست می‌زند | build بدون `NEXT_PUBLIC_API_URL` گرفته شده | متغیر را ست کنید و دوباره build/deploy |
+| `ERESOLVE` هنگام vinext init | react-server-dom-webpack نسخه‌ی 19.3 | `npm install -D react-server-dom-webpack@19.2.8` (بخش ۳) |
+| `vite is not recognized` | نصب‌ها ناقص ماند | دستورهای نصب بخش ۳ را کامل بزنید، بعد `npm run build:vinext` |
 | ریدایرکت بی‌نهایت در Render | نسخه‌ی قدیمی production.py | نسخه‌ی جدید (دارای `SECURE_PROXY_SSL_HEADER`) را push کنید |
 | `DisallowedHost` / ۴۰۰ | دامنه در `DJANGO_ALLOWED_HOSTS` نیست | `honey-388l.onrender.com` بدون `https://` |
 | خطای SSL/channel_binding هنگام اتصال | psycopg2 قدیمی | `pip install -U psycopg2-binary` |
 | عکس‌ها نمایش داده نمی‌شوند | seed بدون `--no-uploads` زده شده | `python manage.py seed_demo --no-uploads` را دوباره بزنید |
+| `No such module "__vinext_action_owner_manifest.js"` هنگام deploy (کد 10021) | `cloudflare()` در `vite.config.ts` بدون `viteEnvironment` | `cloudflare({ viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] } })` را بگذارید، بعد `npm run build:vinext` (باید `OK` بدهد) |
+| `The "react" package ... "react-server" condition must be enabled` | همان علت بالا | همان راه‌حل |

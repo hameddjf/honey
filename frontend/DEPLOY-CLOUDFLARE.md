@@ -1,3 +1,5 @@
+> ⚠️ **این راهنمای عمومی قدیمی‌تر است.** برای دستورهای دقیق و به‌روز این پروژه به `../DEPLOY-ONLINE.md` (بخش ۳) و `../DEPLOY_FIX_REPORT.md` نگاه کنید. نکتهٔ حیاتی: در `vite.config.ts` پلاگین Cloudflare باید با `viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] }` صدا زده شود (نه `cloudflare()` ساده)، وگرنه دیپلوی با خطای ۱۰۰۲۱ شکست می‌خورد. پس از هر تغییر: `npm run build:vinext` باید با `[verify-worker-bundle] OK` تمام شود.
+
 # راهنمای آنلاین کردن پروژه روی Cloudflare Workers
 
 این راهنما بر اساس مستندات رسمی Cloudflare (به‌روزرسانی شده تا ۲۵ اوت ۲۰۲۶) نوشته شده. روش پیشنهادی و پیش‌فرض خود Cloudflare برای اجرای Next.js روی Workers، ابزاری به اسم **vinext** است (جایگزین روش قدیمی‌تر OpenNext). دستورات Next.js را از داخل پوشه `frontend/` اجرا کن.

@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "images:download": "node scripts/download-images.mjs"
+    "images:download": "node scripts/download-images.mjs",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build && node scripts/verify-worker-bundle.mjs",
+    "start:vinext": "vite preview",
+    "predeploy:vinext": "node scripts/verify-worker-bundle.mjs --config-only",
+    "deploy:vinext": "vinext-cloudflare deploy",
+    "verify:vinext": "node scripts/verify-worker-bundle.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
@@ -15,8 +21,18 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.sha-52b0dc0e9",
+    "@cloudflare/workers-response-store": "^1.0.1",
+    "@vinext/cloudflare": "^1.0.1",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-rsc": "^0.5.35",
+    "cf": "^1.0.0-beta.10",
+    "dotenv": "^18.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
-    "dotenv": "^18.0.1"
-  }
+    "react-server-dom-webpack": "^19.2.8",
+    "vinext": "^1.0.1",
+    "vite": "^8.3.0"
+  },
+  "type": "module"
 }
