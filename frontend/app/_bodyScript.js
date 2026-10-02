@@ -146,13 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     modalImg.src = p.image;
     modalImg.alt = p.title;
-    modalEmoji.textContent = p.emoji;
+    modalEmoji.textContent = p.emoji || '🍯';
     modalTagline.textContent = p.tagline;
     modalTitle.textContent = p.title;
     modalDesc.textContent = p.desc;
     modalPrice.textContent = p.price;
     if (modalFullLink) modalFullLink.href = \`/product/\${key}\`;
-    modalBenefits.innerHTML = p.benefits.map(b => \`
+    modalBenefits.innerHTML = (p.benefits || []).map(b => \`
       <div class="modal-benefit">
         <span class="modal-benefit-icon"><svg class="icon"><use href="#\${b.icon}"/></svg></span>
         <span>\${b.label}</span>

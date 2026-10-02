@@ -90,7 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const toFa = (n) => n.toString().replace(/\\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
   const requestedKey = typeof window !== 'undefined' ? window.__PRODUCT_SLUG__ : null;
   const productKey = PRODUCTS[requestedKey] ? requestedKey : 'citrus';
-  const product = PRODUCTS[productKey];
+  // اگر اسلاگ پیدا نشد، اولین محصول موجود؛ اگر هیچ محصولی نبود، بی‌صدا خارج شو
+  // (قبلاً اینجا product undefined می‌شد و کل صفحه با TypeError می‌ترکید).
+  const product = PRODUCTS[productKey] || PRODUCTS[Object.keys(PRODUCTS)[0]];
+  if (!product) return;
 
   document.title = product.title + ' | عسل طبیعی نیکا';
   document.getElementById('crumbTitle').textContent = product.title;
@@ -103,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (categoryChipEl) categoryChipEl.textContent = product.category || '';
   document.getElementById('pdTagline').textContent = product.tagline;
   document.getElementById('pdTitle').textContent = product.title;
-  document.getElementById('pdEmoji').textContent = product.emoji;
+  document.getElementById('pdEmoji').textContent = product.emoji || '🍯';
   document.getElementById('pdPrice').textContent = product.price;
   document.getElementById('pdMobilePrice').textContent = product.price;
   document.getElementById('pdDesc').textContent = product.desc;
@@ -130,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('pdBenefits').innerHTML = product.benefits.map(b => \`
+  document.getElementById('pdBenefits').innerHTML = (product.benefits || []).map(b => \`
     <div class="pd-benefit">
       <span class="pd-benefit-icon"><svg class="icon"><use href="#\${b.icon}"/></svg></span>
       <span>\${b.label}</span>

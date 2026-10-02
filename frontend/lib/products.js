@@ -136,6 +136,45 @@ export async function fetchProducts({ force = false } = {}) {
   return cache;
 }
 
+/**
+ * کاتالوگ آفلاین (فقط داده‌ی تزئینی، بدون قیمت/موجودی زنده).
+ * وقتی بک‌اند در دسترس نیست (لوکال بدون runserver، Render در حال بیدار شدن،
+ * CORS و ...) به‌جای «لیست خالی» این را برمی‌گردانیم تا مودال صفحه‌ی اصلی و
+ * صفحه‌ی محصول همچنان کار کنند. هرگز در cache ذخیره نمی‌شود تا با برگشتن
+ * بک‌اند، بار بعد داده‌ی واقعی بیاید.
+ */
+export function offlineCatalog() {
+  const bySlug = {};
+  for (const [slug, cosmetic] of Object.entries(COSMETIC_PRODUCTS)) {
+    const images = [cosmetic.image, cosmetic.imageDetail].filter(Boolean);
+    bySlug[slug] = {
+      ...cosmetic,
+      slug,
+      images,
+      image: cosmetic.image,
+      fallbackImage: cosmetic.image || "",
+      fallbackImages: images,
+      offline: true,
+    };
+  }
+  return { bySlug, list: Object.values(bySlug), slugs: Object.keys(bySlug), offline: true };
+}
+
+/**
+ * مثل fetchProducts ولی هرگز throw نمی‌کند و هرگز لیست خالی نمی‌دهد:
+ * اگر API خطا بدهد یا هیچ محصول فعالی نیاورد، کاتالوگ آفلاین برمی‌گردد.
+ * صفحه‌های نمایشی (home / shop / product) باید از این استفاده کنند.
+ */
+export async function fetchProductsSafe(opts) {
+  try {
+    const data = await fetchProducts(opts);
+    if (data && data.slugs && data.slugs.length) return data;
+  } catch {
+    // ignore — fall through to offline catalog
+  }
+  return offlineCatalog();
+}
+
 export function getCachedProducts() {
   return cache;
 }

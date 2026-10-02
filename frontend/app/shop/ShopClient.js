@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import buildBodyHTML from "./_bodyContent";
 import bodyScript from "./_bodyScript";
-import { fetchProducts } from "@/lib/products";
+import { fetchProductsSafe } from "@/lib/products";
 import { fetchSiteContent, DEFAULT_SITE_CONTENT } from "@/lib/siteContent";
 
 export default function ShopClient() {
@@ -15,7 +15,7 @@ export default function ShopClient() {
     let cancelled = false;
     Promise.all([
       fetchSiteContent().catch(() => DEFAULT_SITE_CONTENT),
-      fetchProducts().catch(() => ({ bySlug: {} })),
+      fetchProductsSafe(),
     ]).then(([content, products]) => {
       if (cancelled) return;
       setHtml(buildBodyHTML(content));
