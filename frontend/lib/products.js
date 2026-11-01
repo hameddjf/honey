@@ -70,6 +70,16 @@ function formatSizeLabel(product) {
   return `${valueStr} ${SIZE_UNIT_LABELS[product.size_unit] || product.size_unit}`;
 }
 
+// An http:// image URL on an https page is blocked by browsers (mixed content).
+// Upgrade it unless it points at a local dev server.
+function secureUrl(url) {
+  if (typeof window === "undefined" || !url) return url;
+  if (window.location.protocol === "https:" && /^http:\/\//i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)/i.test(url)) {
+    return url.replace(/^http:/i, "https:");
+  }
+  return url;
+}
+
 export function mergeCosmetic(product) {
   const slug = slugFor(product);
   const cosmetic = COSMETIC_PRODUCTS[slug] || {};
@@ -80,7 +90,7 @@ export function mergeCosmetic(product) {
   const apiImages = Array.isArray(product.images) ? product.images : [];
   const sortedApiImages = [...apiImages].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
   const images = sortedApiImages.length
-    ? sortedApiImages.map((img) => img.url)
+    ? sortedApiImages.map((img) => secureUrl(img.url)).filter(Boolean)
     : cosmetic.image
       ? [cosmetic.image]
       : [];
@@ -110,6 +120,8 @@ export function mergeCosmetic(product) {
     // cosmetic image only when the product has none yet.
     images,
     image: images[0] || cosmetic.image,
+    // Used by <img onerror> when the uploaded photo cannot be loaded.
+    fallbackImage: cosmetic.image || "",
   };
 }
 

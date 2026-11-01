@@ -132,12 +132,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
       <span class="pd-category-chip" id="pdCategoryChip"></span>
       <span class="pd-tagline" id="pdTagline"></span>
       <h1 id="pdTitle"></h1>
-      <div class="pd-rating">
-        <span class="stars">
-          <svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg><svg class="icon"><use href="#i-star"/></svg>
-        </span>
-        <span>۴.۸ از ۵ (۱۲۴ نظر)</span>
-      </div>
+      <div class="pd-rating" id="pdRatingMount"></div>
       <div class="pd-price-row">
         <span class="pd-price" id="pdPrice"></span><small>تومان</small>
         <small id="pdOldPrice" style="text-decoration:line-through; margin-inline-start:8px"></small>
@@ -154,7 +149,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
           <button class="qty-plus" aria-label="افزایش تعداد" style="width:38px;height:100%"><svg class="icon"><use href="#i-plus"/></svg></button>
         </div>
         <button class="btn btn-gold" id="pdAddBtn"><span>افزودن به سبد خرید</span><svg class="icon icon-sm"><use href="#i-cart"/></svg></button>
-        <button class="pd-wish-btn" id="pdWishBtn" aria-label="افزودن به علاقه‌مندی‌ها"><svg class="icon"><use href="#i-heart"/></svg></button>
+        <div id="pdReactMount"></div>
       </div>
 
       <div class="pd-trust-mini">
@@ -170,24 +165,13 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
   <div class="pd-tab-buttons">
     <button class="active" data-tab="desc">توضیحات کامل</button>
     <button data-tab="spec">مشخصات محصول</button>
-    <button data-tab="reviews">نظرات کاربران (۱۲۴)</button>
+    <button data-tab="reviews" id="pdReviewsTab">نظرات کاربران</button>
   </div>
   <div class="pd-tab-panel active" id="tab-desc"><p id="pdFullDesc"></p></div>
   <div class="pd-tab-panel" id="tab-spec">
     <table class="spec-table" id="specTable"></table>
   </div>
-  <div class="pd-tab-panel" id="tab-reviews">
-    <div class="testi-card" style="margin-bottom:14px; max-width:640px">
-      <div class="testi-top"><div class="stars"><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg></div></div>
-      <p>عسلش خیلی خوش‌طعم و خالصه، بسته‌بندیش هم شیک بود. حتماً باز سفارش می‌دم.</p>
-      <div class="testi-user"><span class="avatar">م</span><span class="testi-user-info"><strong>مریم احمدی</strong><small>اصفهان</small></span></div>
-    </div>
-    <div class="testi-card" style="max-width:640px">
-      <div class="testi-top"><div class="stars"><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg><svg class="icon icon-sm"><use href="#i-star"/></svg></div></div>
-      <p>ارسال سریع بود و کیفیت عسل با توضیحات سایت کاملاً مطابقت داشت.</p>
-      <div class="testi-user"><span class="avatar">ر</span><span class="testi-user-info"><strong>رضا کریمی</strong><small>مشهد</small></span></div>
-    </div>
-  </div>
+  <div class="pd-tab-panel" id="tab-reviews"><div id="reviewsMount"></div></div>
 </section>
 
 <section class="container" style="padding-bottom:80px">

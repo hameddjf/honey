@@ -1664,3 +1664,31 @@ footer{ background:var(--dark); color:#C9BDA6; }
   .a-btn{ padding:9px 13px; }
   .a-drawer{ width:100vw; }
 }
+
+
+/* ---------- Product likes / comments ---------- */
+.pd-rating .pd-stars{ position:relative; display:inline-block; font-size:19px; line-height:1; letter-spacing:2px; direction:rtl; }
+.pd-rating .pd-stars-bg{ color:#E4D9BF; }
+.pd-rating .pd-stars-fg{ position:absolute; top:0; right:0; overflow:hidden; white-space:nowrap; color:var(--gold); }
+.pd-react{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.pd-react-btn{ display:inline-flex; align-items:center; gap:6px; height:52px; padding:0 16px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--white); color:var(--ink); font:inherit; font-size:16px; cursor:pointer; transition:.15s; }
+.pd-react-btn:hover{ border-color:var(--gold); }
+.pd-react-btn.active.like{ background:#EAF7EC; border-color:#8AC995; color:#1E6B34; }
+.pd-react-btn.active.dislike{ background:#FDECEC; border-color:#F0B4B4; color:#9B2C2C; }
+.pd-react-msg{ flex-basis:100%; color:#9B2C2C; font-size:13px; }
+.pd-comments{ max-width:720px; }
+.pd-comments h3{ margin:0 0 12px; color:var(--ink); }
+.pd-cform textarea{ width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-md); font:inherit; resize:vertical; background:var(--white); color:var(--ink); }
+.pd-cform-row{ display:flex; align-items:center; gap:12px; margin:8px 0 14px; flex-wrap:wrap; }
+.pd-cform-row small{ color:var(--ink-faint); margin-inline-start:auto; }
+.pd-cerror{ color:#9B2C2C; }
+.pd-login-hint, .pd-empty{ color:var(--ink-soft); }
+.pd-comment{ border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin:10px 0; background:var(--cream-soft); }
+.pd-comment.reply{ margin-inline-start:22px; background:var(--white); }
+.pd-comment-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pd-comment-head small{ color:var(--ink-faint); }
+.pd-comment p{ margin:6px 0; white-space:pre-wrap; word-break:break-word; }
+.pd-badge{ background:var(--gold-pale); color:var(--gold-deep); font-size:12px; padding:1px 8px; border-radius:999px; }
+.pd-comment-actions{ display:flex; gap:14px; }
+.pd-link-btn{ background:none; border:0; padding:0; color:var(--gold-deep); font:inherit; font-size:14px; cursor:pointer; }
+.pd-link-btn.danger{ color:#9B2C2C; }

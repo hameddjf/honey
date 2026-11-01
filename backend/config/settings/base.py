@@ -214,6 +214,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         # Applied uniformly regardless of whether the requested email exists,
         # so response timing/behaviour can't be used to enumerate accounts.
+        "product_comment": "30/hour",
         "password_reset_request": "5/hour",
         "password_reset_verify": "20/hour",
         "password_reset_confirm": "20/hour",

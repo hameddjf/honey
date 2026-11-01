@@ -44,6 +44,12 @@ if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":  # noqa: F
         "resolve to a postgresql:// / postgres:// connection string."
     )
 
+# Render (and Cloudflare) terminate TLS and forward plain HTTP to Django with an
+# X-Forwarded-Proto header. Without this, Django believes every request is
+# insecure: SECURE_SSL_REDIRECT loops and absolute URLs (e.g. product image URLs
+# in the API) are built as http:// which browsers block as mixed content.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = False
 SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "true").lower() == "true"
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

@@ -6,6 +6,13 @@ set "NEXT_PUBLIC_SITE_URL=https://nika-honey.kj1378242.workers.dev"
 npx wrangler login
 npm run deploy
 
+(If `npx wrangler login` fails with ETIMEDOUT: the Cloudflare site is blocked from your network.
+ Turn the VPN on in system-wide/TUN mode and retry. Or, if the VPN app exposes a local proxy:
+   set "HTTPS_PROXY=http://127.0.0.1:PORT"      then run npx wrangler login again.
+ Or skip the CLI: Cloudflare dashboard > Workers & Pages > nika-honey > Settings > Build > connect the GitHub repo
+   (Root directory: frontend | Build: npx opennextjs-cloudflare build | Deploy: npx opennextjs-cloudflare deploy)
+   and add the two NEXT_PUBLIC_* values as Build variables.)
+
 === 2) BACKEND -> Render ===
 Nothing to type: git add . && git commit -m "update" && git push   (Render redeploys by itself,
 and its Build Command runs migrate on Neon)
@@ -20,6 +27,8 @@ set "DJANGO_SECRET_KEY=any-random-text-at-least-40-characters-long-0123456789"
 set "DJANGO_ALLOWED_HOSTS=honey-388l.onrender.com"
 set "DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-withered-pond-b1wkaqbb.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 python manage.py migrate
+REM --- OPTIONAL clean slate (deletes ALL data incl. users/orders/comments; keeps tables). Run BEFORE seed_demo:
+REM python manage.py flush --no-input
 python manage.py seed_demo
 python manage.py createsuperuser
 

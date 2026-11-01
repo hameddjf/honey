@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.text import slugify
@@ -125,3 +126,39 @@ class ProductImage(TimeStampedModel):
 
     def __str__(self):
         return f"{self.product.name} — image #{self.pk}"
+
+
+class ProductReaction(models.Model):
+    """One like (+1) or dislike (-1) per user per product."""
+
+    LIKE = 1
+    DISLIKE = -1
+    VALUE_CHOICES = [(LIKE, "like"), (DISLIKE, "dislike")]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="product_reactions")
+    value = models.SmallIntegerField(choices=VALUE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["product", "user"], name="one_reaction_per_user_product")]
+
+    def __str__(self):
+        return f"{self.user_id} {'👍' if self.value == self.LIKE else '👎'} {self.product_id}"
+
+
+class ProductComment(TimeStampedModel):
+    """A user comment on a product, or a one-level reply to another comment."""
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="product_comments")
+    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
+    body = models.TextField(max_length=1000)
+    is_visible = models.BooleanField(default=True, help_text="Untick to hide a comment (moderation).")
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.product_id}: {self.body[:40]}"

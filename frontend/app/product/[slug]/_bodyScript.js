@@ -116,8 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const mainImg = document.getElementById('pdMainImg');
   mainImg.src = galleryImgs[0];
   mainImg.alt = product.title;
+  mainImg.onerror = function () {
+    if (product.fallbackImage && mainImg.src !== product.fallbackImage) { mainImg.onerror = null; mainImg.src = product.fallbackImage; }
+  };
   document.getElementById('pdThumbs').innerHTML = galleryImgs.map((src, i) => \`
-    <button class="\${i === 0 ? 'active' : ''}" data-src="\${src}"><img src="\${src}" alt="\${product.title} - نمای \${toFa(i+1)}"></button>\`).join('');
+    <button class="\${i === 0 ? 'active' : ''}" data-src="\${src}"><img src="\${src}" onerror="this.onerror=null;this.parentElement.style.display='none'" alt="\${product.title} - نمای \${toFa(i+1)}"></button>\`).join('');
   document.querySelectorAll('.pd-gallery-thumbs button').forEach(btn => {
     btn.addEventListener('click', () => {
       mainImg.src = btn.dataset.src;
@@ -162,10 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pdAddBtn')?.addEventListener('click', addProductToCart);
   document.getElementById('pdMobileAddBtn')?.addEventListener('click', addProductToCart);
 
-  document.getElementById('pdWishBtn')?.addEventListener('click', function () {
-    this.classList.toggle('active');
-    showToast(this.classList.contains('active') ? '💛 به علاقه‌مندی‌ها اضافه شد' : 'از علاقه‌مندی‌ها حذف شد');
-  });
 
   /* Related products — همان دسته‌بندی در اولویت است تا مشتری تفاوت
      «ژل رویال و ترکیبات ویژه» با «عسل‌ها» را گم نکند؛ در صورت کم بودن
@@ -181,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return \`
     <article class="product-card">
       <div class="product-card-media">
-        <a href="/product/\${key}"><img src="\${p.image}" alt="\${p.title}" loading="lazy"></a>
+        <a href="/product/\${key}"><img src="\${p.image}" onerror="this.onerror=null;this.src='\${p.fallbackImage || ''}'" alt="\${p.title}" loading="lazy"></a>
         \${p.badge ? \`<span class="product-card-badge">\${p.badge}</span>\` : ''}
         <span class="product-card-emoji">\${p.emoji}</span>
       </div>
