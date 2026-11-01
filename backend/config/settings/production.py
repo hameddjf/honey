@@ -54,13 +54,16 @@ if SECURE_HSTS_SECONDS:
 
 
 # ---------------------------------------------------------------------------
-# Media files (product photos, banners, blog covers) -> Cloudflare R2 / any
-# S3-compatible bucket.
+# Media files (product photos, banners, blog covers).
 #
-# Render's disk is ephemeral and Django does not serve /media/ when
-# DEBUG=False, so uploaded/seeded images MUST live in object storage.
-# Set all R2_* variables (see .env.example); when R2_BUCKET_NAME is unset the
-# app keeps using local MEDIA_ROOT (fine for a first smoke test only).
+# Render's disk is ephemeral and Django does not serve /media/ from disk when
+# DEBUG=False. Two supported options:
+#   1) DEFAULT — store files in the PostgreSQL database (Neon) via
+#      core.storage.DatabaseStorage; Django serves them at /media/<name>.
+#      Everything lives in one place (one backup, nothing extra to set up).
+#   2) Optional — Cloudflare R2 / any S3-compatible bucket, enabled by setting
+#      R2_BUCKET_NAME and the other R2_* variables (see .env.example).
+# Set MEDIA_STORAGE=filesystem only for a throw-away smoke test.
 # ---------------------------------------------------------------------------
 R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "")
 if R2_BUCKET_NAME:
@@ -80,3 +83,6 @@ if R2_BUCKET_NAME:
         },
     }
     MEDIA_URL = f"https://{_r2_public_domain}/"
+elif os.environ.get("MEDIA_STORAGE", "database").lower() != "filesystem":
+    STORAGES["default"] = {"BACKEND": "core.storage.DatabaseStorage"}  # noqa: F405
+    MEDIA_URL = "media/"

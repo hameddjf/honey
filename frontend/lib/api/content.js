@@ -38,12 +38,21 @@ function normalizeUrl(value) {
   return value;
 }
 
+// Blank values from the backend (e.g. a database that has not been seeded yet)
+// must NOT overwrite the built-in defaults — otherwise the phone/address shown on
+// first paint vanish as soon as the API answers.
+function nonEmpty(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined && v !== null && v !== "")
+  );
+}
+
 /** Backend SiteContent -> a partial patch of the local shape (merge onto DEFAULT_SITE_CONTENT). */
 export function fromBackendPayload(data) {
   return {
-    hero: { title: data.hero_title, desc: data.hero_subtitle, image: data.hero_image_url },
+    hero: nonEmpty({ title: data.hero_title, desc: data.hero_subtitle, image: data.hero_image_url }),
     topbar: { message: data.topbar_message, active: !!data.topbar_is_active },
-    footer: {
+    footer: nonEmpty({
       email: data.contact_email,
       phone: data.contact_phone,
       address: data.contact_address,
@@ -52,12 +61,12 @@ export function fromBackendPayload(data) {
       whatsapp: data.social_whatsapp,
       rubika: data.social_rubika,
       tagline: data.footer_text,
-    },
+    }),
     promo: { message: data.promo_message, enabled: data.promo_is_active },
-    video: {
+    video: nonEmpty({
       label: data.video_label,
       embedUrl: data.video_embed_url,
       posterImage: data.video_poster_image_url,
-    },
+    }),
   };
 }

@@ -1,0 +1,27 @@
+=== 1) FRONTEND -> Cloudflare (CMD, run every time you want to publish the frontend) ===
+cd C:\Users\H_M\Downloads\nika-honey-project-UPDATED\nika-honey-project\frontend
+npm install
+set "NEXT_PUBLIC_API_URL=https://honey-388l.onrender.com/api/v1"
+set "NEXT_PUBLIC_SITE_URL=https://nika-honey.kj1378242.workers.dev"
+npx wrangler login
+npm run deploy
+
+=== 2) BACKEND -> Render ===
+Nothing to type: git add . && git commit -m "update" && git push   (Render redeploys by itself,
+and its Build Command runs migrate on Neon)
+
+=== 3) PRODUCTS -> Neon (CMD, run ONCE; needs VPN; re-running resets prices/stock to seed values) ===
+cd C:\Users\H_M\Downloads\nika-honey-project-UPDATED\nika-honey-project\backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+set "DJANGO_SETTINGS_MODULE=config.settings.production"
+set "DJANGO_SECRET_KEY=any-random-text-at-least-40-characters-long-0123456789"
+set "DJANGO_ALLOWED_HOSTS=honey-388l.onrender.com"
+set "DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-withered-pond-b1wkaqbb.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+python manage.py migrate
+python manage.py seed_demo
+python manage.py createsuperuser
+
+=== CHECK ===
+curl https://honey-388l.onrender.com/api/v1/products/

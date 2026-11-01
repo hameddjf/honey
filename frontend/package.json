@@ -7,16 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "images:download": "node scripts/download-images.mjs"
+    "images:download": "node scripts/download-images.mjs",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "next": "16.3.3",
+    "@opennextjs/cloudflare": "^1.20.15",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "dotenv": "^18.0.1",
     "eslint": "^9",
-    "eslint-config-next": "16.3.3",
-    "dotenv": "^18.0.1"
+    "eslint-config-next": "16.4.3",
+    "wrangler": "^4.156.0"
   }
 }

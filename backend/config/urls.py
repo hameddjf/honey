@@ -10,7 +10,9 @@ customer- or frontend-admin-facing surface.
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+
+from core.media_views import serve_db_media
 
 api_v1_patterns = [
     path("", include("core.urls")),
@@ -27,8 +29,16 @@ urlpatterns = [
     path("api/v1/", include(api_v1_patterns)),
 ]
 
+# Database-backed media (production default, see settings/production.py):
+# files live in PostgreSQL and are served by Django itself.
+if settings.STORAGES["default"]["BACKEND"] == "core.storage.DatabaseStorage":
+    _media_prefix = "/" + settings.MEDIA_URL.strip("/") + "/"
+    urlpatterns += [
+        re_path(r"^" + _media_prefix.lstrip("/") + r"(?P<name>.+)$", serve_db_media),
+    ]
+
 # Local/dev-only media serving. In production, MEDIA_URL is expected to be
 # served by the platform/object storage, not by Django itself — see
 # ADMIN_PRODUCTS_MEDIA_REPORT.md "remaining limitation" for details.
-if settings.DEBUG:
+if settings.DEBUG and settings.STORAGES["default"]["BACKEND"] != "core.storage.DatabaseStorage":
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
