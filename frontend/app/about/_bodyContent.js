@@ -46,7 +46,7 @@ const bodyHTML = `
     <ul class="topbar-social">
       <li><a href="${DEFAULT_SITE_CONTENT.footer.instagram}" aria-label="اینستاگرام"><svg class="icon"><use href="#i-instagram"/></svg></a></li>
       <li><a href="${DEFAULT_SITE_CONTENT.footer.telegram}" aria-label="تلگرام"><svg class="icon"><use href="#i-telegram"/></svg></a></li>
-      <li><a href="${DEFAULT_SITE_CONTENT.footer.whatsapp}" aria-label="واتساپ"><svg class="icon"><use href="#i-whatsapp"/></svg></a></li>
+      <li><a href="${DEFAULT_SITE_CONTENT.footer.rubika}" aria-label="روبیکا"><svg class="icon"><use href="#i-rubika"/></svg></a></li>
     </ul>
   </div>
 </div>
@@ -129,7 +129,7 @@ const bodyHTML = `
       <p>امروز نیکا با همکاری چند خانواده‌ی زنبوردار در مناطق مختلف ایران، طیفی از عسل‌های تک‌گل و چندگل رو تولید می‌کنه؛ هرکدوم با طعم و خاصیتی که از منطقه و فصل برداشتش می‌گیره.</p>
     </div>
     <div class="about-story-media">
-      <img src="/images/posters/media-bee.jpg" alt="تولید عسل طبیعی نیکا" loading="lazy">
+      <img src="https://images.pexels.com/photos/5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg" alt="تولید عسل طبیعی نیکا" loading="lazy">
     </div>
   </div>
 </section>
@@ -219,6 +219,7 @@ const bodyHTML = `
       <ul class="footer-social">
         <li><a href="${DEFAULT_SITE_CONTENT.footer.instagram}" aria-label="اینستاگرام"><svg class="icon icon-sm"><use href="#i-instagram"/></svg></a></li>
         <li><a href="${DEFAULT_SITE_CONTENT.footer.telegram}" aria-label="تلگرام"><svg class="icon icon-sm"><use href="#i-telegram"/></svg></a></li>
+        <li><a href="${DEFAULT_SITE_CONTENT.footer.rubika}" aria-label="روبیکا"><svg class="icon icon-sm"><use href="#i-rubika"/></svg></a></li>
         <li><a href="${DEFAULT_SITE_CONTENT.footer.whatsapp}" aria-label="واتساپ"><svg class="icon icon-sm"><use href="#i-whatsapp"/></svg></a></li>
       </ul>
     </div>

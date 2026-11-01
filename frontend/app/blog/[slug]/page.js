@@ -1,25 +1,38 @@
 import { BLOG_SLUGS, getBlogPost } from "@/lib/blog";
 import BlogPostClient from "./BlogPostClient";
 import { absoluteUrl, blogPostingJsonLd, breadcrumbJsonLd, jsonLdProps } from "@/lib/seo";
+import { serverFetchJson } from "@/lib/serverApi";
 
-// Pre-generates routes for the local fallback slugs only — this never
-// touches the network, so the Cloudflare build never depends on the
-// Django backend being reachable. Any slug that only exists in the
-// backend (added after this build) still renders fine: it's handled at
-// request time by BlogPostClient's client-side fetch, since dynamicParams
-// isn't disabled here.
+export const revalidate = 300;
+
+// Only the local fallback slugs are pre-generated (never touches the network at
+// build time). Posts that exist only in Django render on demand (dynamicParams).
 export function generateStaticParams() {
   return BLOG_SLUGS.map((slug) => ({ slug }));
 }
 
-// Best-effort metadata from the local copy when the slug is one of the
-// known local posts (this runs at BUILD time for statically-generated
-// slugs, so it must stay backend-independent); falls back to a generic
-// title otherwise. The real title/content still render once
-// BlogPostClient's client-side fetch resolves against the live backend.
-export function generateMetadata({ params }) {
-  const post = getBlogPost(params.slug);
-  const url = absoluteUrl(`/blog/${params.slug}`);
+// Django is the source of truth; the local copy is the offline fallback.
+async function loadPost(slug) {
+  const api = await serverFetchJson(`/blog-posts/${encodeURIComponent(slug)}/`);
+  if (api) {
+    return {
+      title: api.title,
+      excerpt: api.excerpt,
+      image: api.cover_image_url,
+      publishedAtIso: api.published_at || undefined,
+      author: api.author,
+    };
+  }
+  const local = getBlogPost(slug);
+  return local
+    ? { title: local.title, excerpt: local.excerpt, image: local.image, publishedAtIso: local.publishedAtIso, author: local.author }
+    : null;
+}
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const post = await loadPost(slug);
+  const url = absoluteUrl(`/blog/${slug}`);
   if (!post) {
     return {
       title: "وبلاگ",
@@ -40,17 +53,14 @@ export function generateMetadata({ params }) {
       publishedTime: post.publishedAtIso,
       authors: post.author ? [post.author] : undefined,
     },
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.excerpt,
-    },
+    twitter: { card: "summary_large_image", title: post.title, description: post.excerpt },
   };
 }
 
-export default function BlogPostPage({ params }) {
-  const post = getBlogPost(params.slug);
-  const url = absoluteUrl(`/blog/${params.slug}`);
+export default async function BlogPostPage({ params }) {
+  const { slug } = await params;
+  const post = await loadPost(slug);
+  const url = absoluteUrl(`/blog/${slug}`);
 
   return (
     <>
@@ -79,7 +89,7 @@ export default function BlogPostPage({ params }) {
           />
         </>
       )}
-      <BlogPostClient slug={params.slug} />
+      <BlogPostClient slug={slug} />
     </>
   );
 }

@@ -1,113 +1,140 @@
+import hashlib
+import json
 import tempfile
-from pathlib import Path
 from unittest.mock import patch
 
-from django.core.management import CommandError, call_command
-from django.test import TestCase, override_settings
+from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from content.models import BlogPost, MediaAsset, SiteContent
 from orders.models import Order
-from products.management.commands import seed_demo
+from products.management.commands.seed_demo import _media_url
 from products.models import Category, Product, ProductImage
 
-DOWNLOAD = "products.management.commands.seed_demo._download_real_image"
+
+class _FakeResponse:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self, *_args):
+        return self._payload
 
 
+def _fake_urlopen(request, timeout=None):
+    """Stand-in for the Wikimedia Commons search API (no network in tests)."""
+    key = hashlib.md5(request.full_url.encode()).hexdigest()[:10]
+    pages = {
+        str(i): {
+            "title": f"File:Test-{key}-{i}.jpg",
+            "imageinfo": [{
+                "thumburl": f"https://upload.wikimedia.org/test/{key}-{i}.jpg",
+                "extmetadata": {"LicenseShortName": {"value": "CC BY-SA 4.0"}, "Artist": {"value": "Test"}},
+            }],
+        }
+        for i in range(12)
+    }
+    return _FakeResponse(json.dumps({"query": {"pages": pages}}).encode("utf-8"))
+
+
+PATCH_DOWNLOAD = patch(
+    "products.management.commands.seed_demo._download_real_image", return_value=b"fake-seed-image"
+)
+PATCH_SEARCH = patch("products.management.commands.seed_demo.urlopen", side_effect=_fake_urlopen)
+
+EXPECTED_SLUGS = {
+    "citrus", "dark", "forest", "sunflower", "blossom", "sunflower-honey", "royal-jelly",
+}
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp(prefix="nika-seed-test-"))
 class SeedDemoTests(TestCase):
-    """
-    Exercises `python manage.py seed_demo` end-to-end (including the
-    real-photo download path, mocked so tests run offline and never write
-    into the real project folders) against a fresh test database, and locks
-    in that running it twice never duplicates data.
-    """
+    """`manage.py seed_demo` end-to-end with the network mocked."""
 
     def setUp(self):
-        tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp.cleanup)
-        self.cache_dir = Path(tmp.name) / "downloaded"
-        self.public_dir = Path(tmp.name) / "public"
-        self.public_dir.mkdir()
-        media = override_settings(MEDIA_ROOT=str(Path(tmp.name) / "media"))
-        media.enable()
-        self.addCleanup(media.disable)
-        for target, value in (
-            ("ASSETS_CACHE_DIR", self.cache_dir),
-            ("FRONTEND_PUBLIC_DIR", self.public_dir),
-        ):
-            patcher = patch.object(seed_demo, target, value)
-            patcher.start()
-            self.addCleanup(patcher.stop)
+        for p in (PATCH_DOWNLOAD, PATCH_SEARCH):
+            p.start()
+            self.addCleanup(p.stop)
 
-    @patch(DOWNLOAD, return_value=b"fake-seed-image")
-    def test_seed_demo_populates_everything(self, _download):
+    def test_seed_demo_populates_catalog_content_and_blog(self):
         call_command("seed_demo")
 
         self.assertEqual(Category.objects.count(), 2)
         self.assertEqual(Product.objects.count(), 7)
-        # 2 images (1 primary + 1 secondary) per product.
-        self.assertEqual(ProductImage.objects.count(), 14)
+        self.assertEqual(set(Product.objects.values_list("slug", flat=True)), EXPECTED_SLUGS)
+
+        jelly = Product.objects.get(name="ژل رویال")
+        self.assertEqual(str(jelly.price), "600000.00")
+        self.assertEqual((jelly.size_value, jelly.size_unit), (10, "g"))
+        self.assertTrue(jelly.is_featured)
+        self.assertTrue(jelly.is_active)
+        self.assertIn("۵۰ گرمی: ۳٬۰۰۰٬۰۰۰ تومان", jelly.description)
+
+        for product in Product.objects.filter(category__name="عسل‌ها"):
+            self.assertEqual(str(product.price), "800000.00", product.name)
+            self.assertEqual((product.size_value, product.size_unit), (500, "g"), product.name)
+            self.assertFalse(product.is_featured, product.name)
+            self.assertIn("۳٬۲۰۰٬۰۰۰ تومان", product.description, product.name)
+
         for product in Product.objects.all():
             self.assertTrue(product.description, f"{product.name} has no full description")
-            self.assertEqual(product.images.filter(is_primary=True).count(), 1)
-            for image in product.images.all():
-                self.assertIn("seed-photo-", image.image.name)
-        self.assertEqual(Order.objects.count(), 5)
-        self.assertEqual(BlogPost.objects.count(), 6)
+            self.assertGreaterEqual(product.images.count(), 3, product.name)
+            self.assertEqual(product.images.filter(is_primary=True).count(), 1, product.name)
+
+        # No demo accounts / orders are ever created.
+        self.assertEqual(get_user_model().objects.count(), 0)
+        self.assertEqual(Order.objects.count(), 0)
+
+        self.assertEqual(BlogPost.objects.count(), 8)
         self.assertEqual(MediaAsset.objects.count(), 6)
         for post in BlogPost.objects.all():
             self.assertTrue(post.is_published)
             self.assertTrue(post.body)
             self.assertTrue(post.cover_image_url)
+        self.assertTrue(BlogPost.objects.filter(slug="honey-and-infants").exists())
+        self.assertTrue(BlogPost.objects.filter(slug="royal-jelly-guide").exists())
+
         content = SiteContent.load()
         self.assertTrue(content.video_embed_url)
         self.assertTrue(content.video_poster_image_url)
         self.assertTrue(content.hero_image_url)
-        self.assertTrue(content.hero_title)
+        self.assertIn("۱٫۵ میلیون", content.topbar_message)
+        self.assertEqual(content.contact_phone, "09365522762")
+        self.assertEqual(content.contact_address, "استان گلستان، شهرستان کلاله، روستای یاساقلق")
+        self.assertEqual(content.social_instagram, "https://www.instagram.com/Nika_honey1/")
+        self.assertEqual(content.social_telegram, "https://t.me/Nika_honey1")
+        self.assertEqual(content.social_whatsapp, "https://wa.me/989365522762")
+        self.assertEqual(content.social_rubika, "https://rubika.ir/Nika_honey1")
 
-    @patch(DOWNLOAD, return_value=b"fake-seed-image")
-    def test_photos_are_saved_inside_the_project(self, _download):
+    def test_seed_demo_is_idempotent(self):
         call_command("seed_demo")
-
-        # download cache (backend) ...
-        for slug in seed_demo.PRODUCT_PHOTO_SOURCES:
-            self.assertTrue((self.cache_dir / f"product-{slug}-primary.jpg").is_file())
-            self.assertTrue((self.cache_dir / f"product-{slug}-detail.jpg").is_file())
-        # ... and the exact paths the storefront references (frontend/public)
-        for slug in seed_demo.PRODUCT_PHOTO_SOURCES:
-            self.assertTrue((self.public_dir / "images" / "products" / f"{slug}.jpg").is_file())
-            self.assertTrue((self.public_dir / "images" / "products" / f"{slug}-detail.jpg").is_file())
-        for key in seed_demo.POSTER_SOURCES:
-            self.assertTrue((self.public_dir / "images" / "posters" / f"{key}.jpg").is_file())
-
-    @patch(DOWNLOAD, return_value=b"fake-seed-image")
-    def test_second_run_reuses_cache_and_does_not_download_again(self, download):
-        call_command("seed_demo")
-        first_run_calls = download.call_count
-        self.assertGreater(first_run_calls, 0)
-
-        call_command("seed_demo")
-        self.assertEqual(download.call_count, first_run_calls)
-
-        call_command("seed_demo", refresh=True)
-        self.assertGreater(download.call_count, first_run_calls)
-
-    @patch(DOWNLOAD, return_value=b"fake-seed-image")
-    def test_seed_demo_is_idempotent(self, _download):
-        call_command("seed_demo")
+        images = ProductImage.objects.count()
         call_command("seed_demo")
 
         self.assertEqual(Category.objects.count(), 2)
         self.assertEqual(Product.objects.count(), 7)
-        self.assertEqual(ProductImage.objects.count(), 14)
-        self.assertEqual(Order.objects.count(), 5)
-        self.assertEqual(BlogPost.objects.count(), 6)
+        self.assertEqual(ProductImage.objects.count(), images)
+        self.assertEqual(BlogPost.objects.count(), 8)
         self.assertEqual(MediaAsset.objects.count(), 6)
         self.assertEqual(SiteContent.objects.count(), 1)
+        self.assertEqual(get_user_model().objects.count(), 0)
 
-    @patch(DOWNLOAD, return_value=b"fake-seed-image")
-    def test_seed_demo_never_overwrites_a_real_staff_uploaded_image(self, _download):
-        """A product that already has an image must not be overwritten or
-        duplicated by seed_demo."""
+    def test_seed_demo_frees_a_legacy_slug_held_by_another_product(self):
+        category = Category.objects.create(name="عسل‌ها")
+        legacy = Product.objects.create(name="عسل ترنجبین", slug="blossom", category=category, price=1, stock=1)
+        call_command("seed_demo")
+
+        legacy.refresh_from_db()
+        self.assertEqual(legacy.slug, "blossom-legacy")
+        self.assertEqual(Product.objects.get(name="عسلک ترنجبین").slug, "blossom")
+
+    def test_seed_demo_never_overwrites_staff_uploaded_images(self):
         call_command("seed_demo")
         product = Product.objects.get(name="عسل مرکبات")
         before = product.images.count()
@@ -116,8 +143,53 @@ class SeedDemoTests(TestCase):
 
         self.assertEqual(product.images.count(), before)
 
-    @patch(DOWNLOAD, side_effect=seed_demo.CommandError("network down"))
-    def test_strict_mode_fails_when_downloads_fail(self, _download):
+    def test_seed_demo_updates_existing_contact_details(self):
+        call_command("seed_demo")
+        content = SiteContent.load()
+        content.contact_phone = "021-00000000"
+        content.contact_address = "تهران، ایران"
+        content.social_instagram = "https://instagram.com/old"
+        content.social_telegram = "https://t.me/old"
+        content.social_whatsapp = "https://wa.me/989120000000"
+        content.social_rubika = "https://rubika.ir/old"
+        content.save()
+
+        call_command("seed_demo")
+        content.refresh_from_db()
+        self.assertEqual(content.contact_phone, "09365522762")
+        self.assertEqual(content.social_rubika, "https://rubika.ir/Nika_honey1")
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp(prefix="nika-seed-test-"))
+class SeedDemoOfflineSearchTests(TestCase):
+    """If Wikimedia is unreachable the catalog must still be created (no photos)."""
+
+    @patch("products.management.commands.seed_demo._download_real_image", return_value=b"fake-seed-image")
+    @patch("products.management.commands.seed_demo.urlopen", side_effect=OSError("blocked"))
+    def test_products_created_when_image_search_fails(self, _urlopen, _download):
+        call_command("seed_demo")
+        self.assertEqual(Product.objects.count(), 7)
+        self.assertEqual(ProductImage.objects.count(), 0)
+        self.assertEqual(BlogPost.objects.count(), 8)
+
+    @patch("products.management.commands.seed_demo._download_real_image", return_value=b"fake-seed-image")
+    @patch("products.management.commands.seed_demo.urlopen", side_effect=OSError("blocked"))
+    def test_require_images_flag_is_strict(self, _urlopen, _download):
+        from django.core.management.base import CommandError
         with self.assertRaises(CommandError):
-            call_command("seed_demo", strict=True)
-        self.assertEqual(Product.objects.count(), 0)  # nothing half-seeded
+            call_command("seed_demo", require_images=True)
+
+
+class MediaUrlHelperTests(SimpleTestCase):
+    def test_relative_and_absolute_urls(self):
+        class F:
+            def __init__(self, url):
+                self.url = url
+
+            def __bool__(self):
+                return True
+
+        self.assertEqual(_media_url(F("/media/a.jpg")), "/media/a.jpg")
+        self.assertEqual(_media_url(F("media/a.jpg")), "/media/a.jpg")
+        self.assertEqual(_media_url(F("https://media.nikahoney.ir/a.jpg")), "https://media.nikahoney.ir/a.jpg")
+        self.assertEqual(_media_url(None), "")

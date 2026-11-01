@@ -1,6 +1,8 @@
+import { absoluteUrl } from "@/lib/seo";
 import BuyingGuideClient from "./BuyingGuideClient";
 
 export const metadata = {
+  alternates: { canonical: absoluteUrl("/buying-guide") },
   title: "راهنمای خرید",
   description: "راهنمای گام‌به‌گام خرید از فروشگاه عسل طبیعی نیکا و انتخاب عسل مناسب.",
 };

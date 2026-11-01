@@ -105,11 +105,6 @@ export default function LoginClient() {
           <p className="auth-switch">
             حساب ندارید؟ <a href="/signup">ثبت‌نام کنید</a>
           </p>
-
-          <div className="auth-hint">
-            برای ورود به پنل مدیریت با داده‌ی دمو: <br />
-            ایمیل: <b dir="ltr">staff@nikahoney.local</b> — رمز: <b dir="ltr">staff-pass-123</b>
-          </div>
         </div>
       </div>
 

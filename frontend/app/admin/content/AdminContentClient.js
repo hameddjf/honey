@@ -171,6 +171,9 @@ export default function AdminContentClient() {
           <Field label="لینک واتس‌اپ">
             <input dir="ltr" value={content.footer.whatsapp} onChange={(e) => set("footer", "whatsapp", e.target.value)} />
           </Field>
+          <Field label="لینک روبیکا">
+            <input dir="ltr" value={content.footer.rubika} onChange={(e) => set("footer", "rubika", e.target.value)} />
+          </Field>
         </div>
 
         {/* ---------- فوتر ---------- */}

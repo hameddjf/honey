@@ -1,6 +1,8 @@
+import { absoluteUrl } from "@/lib/seo";
 import AboutClient from "./AboutClient";
 
 export const metadata = {
+  alternates: { canonical: absoluteUrl("/about") },
   title: "درباره ما",
   description: "داستان نیکا و روند زنبورداری ما، از انتخاب مرتع تا بسته‌بندی عسل خالص و طبیعی.",
 };

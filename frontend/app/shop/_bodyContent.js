@@ -48,7 +48,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
     <ul class="topbar-social">
       <li><a href="${content.footer.instagram}" aria-label="اینستاگرام"><svg class="icon"><use href="#i-instagram"/></svg></a></li>
       <li><a href="${content.footer.telegram}" aria-label="تلگرام"><svg class="icon"><use href="#i-telegram"/></svg></a></li>
-      <li><a href="${content.footer.whatsapp}" aria-label="واتساپ"><svg class="icon"><use href="#i-whatsapp"/></svg></a></li>
+      <li><a href="${content.footer.rubika}" aria-label="روبیکا"><svg class="icon"><use href="#i-rubika"/></svg></a></li>
     </ul>
   </div>
 </div>
@@ -187,7 +187,9 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
       <ul class="footer-social">
         <li><a href="${content.footer.instagram}" aria-label="اینستاگرام"><svg class="icon icon-sm"><use href="#i-instagram"/></svg></a></li>
         <li><a href="${content.footer.telegram}" aria-label="تلگرام"><svg class="icon icon-sm"><use href="#i-telegram"/></svg></a></li>
+        <li><a href="${content.footer.rubika}" aria-label="روبیکا"><svg class="icon icon-sm"><use href="#i-rubika"/></svg></a></li>
         <li><a href="${content.footer.whatsapp}" aria-label="واتساپ"><svg class="icon icon-sm"><use href="#i-whatsapp"/></svg></a></li>
+        <li><a href="${content.footer.rubika}" aria-label="روبیکا" target="_blank" rel="noopener noreferrer">روبیکا</a></li>
       </ul>
     </div>
 

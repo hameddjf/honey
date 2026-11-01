@@ -80,8 +80,8 @@ export default function SiteHeader() {
               </a>
             </li>
             <li>
-              <a href={DEFAULT_SITE_CONTENT.footer.whatsapp} aria-label="واتساپ">
-                <svg className="icon"><use href="#i-whatsapp" /></svg>
+              <a href={DEFAULT_SITE_CONTENT.footer.rubika} aria-label="روبیکا">
+                <svg className="icon"><use href="#i-rubika" /></svg>
               </a>
             </li>
           </ul>

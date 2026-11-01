@@ -120,7 +120,31 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.play-btn')?.addEventListener('click', (event) => {
     const url = event.currentTarget?.dataset?.videoUrl;
     if (!url) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Direct files and YouTube/Aparat links play in an on-page player;
+    // any other page (e.g. a stock-video page) opens in a new tab.
+    let player = null;
+    if (/\\.(mp4|webm)(\\?.*)?$/i.test(url)) {
+      player = '<video src="' + url + '" controls autoplay playsinline style="width:100%;height:100%;background:#000"></video>';
+    } else {
+      const yt = url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/embed\\/)([\\w-]{6,})/);
+      const ap = url.match(/aparat\\.com\\/v\\/([\\w]+)/);
+      const src = yt ? 'https://www.youtube.com/embed/' + yt[1] + '?autoplay=1'
+        : ap ? 'https://www.aparat.com/video/video/embed/videohash/' + ap[1] + '/vt/frame' : '';
+      if (src) player = '<iframe src="' + src + '" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:100%;border:0"></iframe>';
+    }
+    if (!player) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML = '<div style="position:relative;width:min(960px,100%);aspect-ratio:16/9">' + player +
+      '<button type="button" aria-label="بستن" style="position:absolute;top:-14px;inset-inline-start:-6px;width:36px;height:36px;border-radius:50%;border:0;background:#fff;font-size:22px;cursor:pointer">×</button></div>';
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay || e.target.tagName === 'BUTTON') close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
   });
 
   /* ---------- Product detail modal ---------- */
@@ -140,19 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const openModal = (key) => {
     const p = PRODUCTS[key];
     if (!p || !modal) return;
-    modalImg.onerror = () => {
-      modalImg.onerror = null;
-      if (p.fallbackImage) modalImg.src = p.fallbackImage;
-    };
     modalImg.src = p.image;
     modalImg.alt = p.title;
-    modalEmoji.textContent = p.emoji || '🍯';
+    modalEmoji.textContent = p.emoji;
     modalTagline.textContent = p.tagline;
     modalTitle.textContent = p.title;
     modalDesc.textContent = p.desc;
     modalPrice.textContent = p.price;
     if (modalFullLink) modalFullLink.href = \`/product/\${key}\`;
-    modalBenefits.innerHTML = (p.benefits || []).map(b => \`
+    modalBenefits.innerHTML = p.benefits.map(b => \`
       <div class="modal-benefit">
         <span class="modal-benefit-icon"><svg class="icon"><use href="#\${b.icon}"/></svg></span>
         <span>\${b.label}</span>
@@ -180,20 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-  // فلش کوچک گوشه‌ی کارت = رفتن به صفحه‌ی کامل محصول (مودال باز نشود)
-  document.querySelectorAll('.cat-dot').forEach(btn => {
+  document.querySelectorAll('.cat-dot, .cat-media-link').forEach(btn => {
     btn.addEventListener('click', (e) => e.stopPropagation());
-  });
-  // کلیک روی تصویر محصول = باز شدن مودال اطلاعات (نه رفتن به صفحه‌ی محصول).
-  // کلیک با Ctrl/Cmd/Shift هنوز لینک را در تب جدید باز می‌کند.
-  document.querySelectorAll('.cat-media-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
-        e.stopPropagation();
-        return;
-      }
-      e.preventDefault();
-    });
   });
 
   document.getElementById('modalClose')?.addEventListener('click', closeModal);

@@ -11,181 +11,78 @@ duplicating them. Works against a fresh SQLite database and, after
 `migrate`, equally against Postgres (nothing here is SQLite-specific).
 """
 
-import time
 from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 from io import BytesIO
-from pathlib import Path
 from urllib.request import Request, urlopen
 
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from PIL import Image
 
-from accounts.models import Address
 from content.models import BlogPost, MediaAsset, SiteContent, StoreSettings
-from orders.models import Order, OrderItem
 from products.models import Category, Product, ProductImage
 
-User = get_user_model()
 
 CATEGORIES = [
     {"name": "عسل‌ها", "description": "انواع عسل طبیعی"},
     {"name": "ژل رویال و ترکیبات ویژه", "description": "ژل رویال و محصولات ترکیبی ویژه"},
 ]
 
-# stable_slug: matches frontend/lib/products.js's SLUG_BY_NAME and is used
-# to select deterministic real-photo sources below. It is not stored in Django.
+# stable_slug: the public URL slug (/product/<slug>). It is stored as Product.slug and
+# must match frontend/lib/products.js SLUG_BY_NAME + lib/productsCosmetic.js keys.
 PRODUCTS = [
     {
-        "name": "عسل مرکبات",
-        "stable_slug": "citrus",
-        "category": "عسل‌ها",
-        "short_description": "عسل خالص با عطر مرکبات",
-        "description": (
-            "عسل مرکبات نیکا از شهد باغ‌های پرتقال و نارنگی شمال کشور به‌دست می‌آید و "
-            "رایحه‌ای تازه و مرکباتی دارد که آن را به گزینه‌ای دلپذیر برای صبحانه و "
-            "نوشیدنی‌های گرم تبدیل می‌کند. رنگ روشن و بافت نرم آن، همراه با شیرینی "
-            "متعادل، این عسل را محبوب علاقه‌مندان به طعم‌های ملایم کرده است."
-        ),
-        "price": Decimal("450000"),
-        "previous_price": Decimal("495000"),
-        "stock": 50,
-        "is_featured": True,
-        "size_value": Decimal("450"),
-        "size_unit": "g",
+        "name": "عسل کلزا", "stable_slug": "sunflower", "category": "عسل‌ها",
+        "short_description": "عسل با منشأ گل‌های زرد کلزا؛ معمولاً روشن‌رنگ با شیرینی ملایم.",
+        "description": "## معرفی عسل کلزا\n\nعسل کلزا از شهد گل‌های زرد گیاه کلزا به‌دست می‌آید. رنگ آن معمولاً روشن تا زرد کم‌رنگ و طعم آن ملایم است؛ ویژگی‌های دقیق هر برداشت می‌تواند با منطقه و فصل تغییر کند.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۵۰۰ گرم است (۸۰۰٬۰۰۰ تومان)؛ برای یک کیلو تعداد ۲ و برای دو کیلو تعداد ۴ را انتخاب کنید. قیمت پایه هر کیلوگرم: ۱٬۶۰۰٬۰۰۰ تومان. بسته نیم‌کیلویی: ۸۰۰٬۰۰۰ تومان؛ یک‌کیلویی: ۱٬۶۰۰٬۰۰۰ تومان؛ دوکیلویی: ۳٬۲۰۰٬۰۰۰ تومان. برای وزن‌های بالاتر هماهنگی تلفنی انجام می‌شود.\n\n## نگهداری\n\nدر ظرف دربسته، دور از رطوبت، نور مستقیم و گرمای زیاد نگهداری شود. بلوره‌شدن ممکن است طبیعی باشد و به‌تنهایی اثبات‌کننده خلوص یا تقلب نیست. به کودکان زیر یک سال عسل ندهید. این محصول غذاست و جایگزین درمان پزشکی نیست.",
+        "price": Decimal("800000"), "stock": 40, "size_value": Decimal("500"), "size_unit": "g",
+        "image_queries": ["Brassica napus rapeseed yellow flowers honey bee", "rapeseed field yellow flowers bee", "rapeseed honey jar"],
     },
     {
-        "name": "عسل کلزا",
-        "stable_slug": "sunflower",
-        "category": "عسل‌ها",
-        "short_description": "عسل روشن و خوش‌طعم کلزا",
-        "description": (
-            "عسل کلزا با رنگ روشن و طعمی ملایم، یکی از پرمصرف‌ترین عسل‌های خانگی است. "
-            "به‌دلیل درصد بالای گلوکز، این عسل معمولاً ظرف چند هفته پس از برداشت بلوره "
-            "می‌شود — نشانه‌ای از خام و طبیعی بودن آن، نه افت کیفیت. مناسب مصرف روزانه "
-            "و همراهی با نان و لبنیات صبحانه."
-        ),
-        "price": Decimal("380000"),
-        "stock": 40,
-        "size_value": Decimal("450"),
-        "size_unit": "g",
+        "name": "عسل جنگل (نمدار)", "stable_slug": "forest", "category": "عسل‌ها",
+        "short_description": "عسل با منشأ گل‌های نمدار؛ رایحه گیاهی و گل‌مانند، بسته به برداشت.",
+        "description": "## معرفی عسل جنگل (نمدار)\n\nعسل نمدار از شهد گل‌های درختان نمدار (Tilia) به‌دست می‌آید. در منابع توصیفی، رایحه گل‌مانند و گیاهی و طعمی شیرین با گاهی پس‌مزه گیاهی برای آن گزارش شده است؛ رنگ، شدت رایحه و بافت با گونه درخت و شرایط برداشت تفاوت دارد. نام «جنگل» به‌تنهایی تضمین نمی‌کند که عسل کاملاً تک‌گل باشد.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۵۰۰ گرم است (۸۰۰٬۰۰۰ تومان)؛ برای یک کیلو تعداد ۲ و برای دو کیلو تعداد ۴ را انتخاب کنید. هر کیلوگرم ۱٬۶۰۰٬۰۰۰ تومان؛ نیم‌کیلو ۸۰۰٬۰۰۰ تومان؛ یک کیلو ۱٬۶۰۰٬۰۰۰ تومان؛ دو کیلو ۳٬۲۰۰٬۰۰۰ تومان. وزن‌های بالاتر با هماهنگی قابل سفارش‌اند.\n\nدر جای خشک و خنک و ظرف دربسته نگهداری شود. به کودکان زیر یک سال عسل ندهید. ادعای درمانی برای این محصول مطرح نمی‌شود.",
+        "price": Decimal("800000"), "stock": 40, "size_value": Decimal("500"), "size_unit": "g",
+        "image_queries": ["Tilia linden tree flowers honey bee", "linden blossom Tilia flowers", "linden honey in glass jar"],
     },
     {
-        "name": "عسل سیاه تلو",
-        "stable_slug": "dark",
-        "category": "عسل‌ها",
-        "short_description": "عسل تیره و کوهستانی تلو",
-        "description": (
-            "عسل سیاه تلو از مناطق کوهستانی و صعب‌العبور برداشت می‌شود و به‌دلیل تنوع "
-            "گیاهی منطقه، طعمی غلیظ و عطری قوی دارد. رنگ تیره‌ی این عسل نشانه‌ی غلظت "
-            "بالای مواد معدنی و آنتی‌اکسیدان‌هاست؛ گزینه‌ای مناسب برای فصل سرما و "
-            "تقویت روزانه‌ی بدن."
-        ),
-        "price": Decimal("520000"),
-        "stock": 30,
-        "size_value": Decimal("450"),
-        "size_unit": "g",
+        "name": "عسل مرکبات", "stable_slug": "citrus", "category": "عسل‌ها",
+        "short_description": "عسل با منشأ شکوفه مرکبات؛ معمولاً رایحه گل‌مانند و مرکباتی.",
+        "description": "## معرفی عسل مرکبات\n\nعسل مرکبات از شهد شکوفه درختانی مانند پرتقال، لیمو و نارنگی به‌دست می‌آید. عسل‌های این گروه اغلب رایحه‌ای گل‌مانند و لطیف دارند و رنگ آن‌ها می‌تواند از روشن تا کهربایی متغیر باشد. ویژگی نهایی به نوع مرکبات و شرایط منطقه و برداشت بستگی دارد.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۵۰۰ گرم است (۸۰۰٬۰۰۰ تومان)؛ برای یک کیلو تعداد ۲ و برای دو کیلو تعداد ۴ را انتخاب کنید. هر کیلوگرم ۱٬۶۰۰٬۰۰۰ تومان؛ نیم‌کیلو ۸۰۰٬۰۰۰ تومان؛ یک کیلو ۱٬۶۰۰٬۰۰۰ تومان؛ دو کیلو ۳٬۲۰۰٬۰۰۰ تومان. برای سفارش‌های حجیم‌تر تماس بگیرید.\n\nدر ظرف دربسته، دور از نور مستقیم و رطوبت نگهداری شود. به کودکان زیر یک سال عسل ندهید.",
+        "price": Decimal("800000"), "stock": 40, "size_value": Decimal("500"), "size_unit": "g",
+        "image_queries": ["citrus orange blossom flowers honey bee", "orange tree blossom close up", "citrus honey jar orange blossom"],
     },
     {
-        "name": "عسل نمدار",
-        "stable_slug": "forest",
-        "category": "عسل‌ها",
-        "short_description": "عسل معطر گل نمدار",
-        "description": (
-            "عسل نمدار از شهد درختان نمدار جنگل‌های هیرکانی به‌دست می‌آید و رایحه‌ای "
-            "خاص و آرامش‌بخش دارد که در طب سنتی برای تسکین اعصاب و کمک به خواب راحت "
-            "شناخته می‌شود. طعم آن ملایم‌تر از عسل‌های کوهستانی و برای مصرف روزانه "
-            "خانواده مناسب است."
-        ),
-        "price": Decimal("470000"),
-        "stock": 35,
-        "size_value": Decimal("450"),
-        "size_unit": "g",
+        "name": "عسل سیاه تلو", "stable_slug": "dark", "category": "عسل‌ها",
+        "short_description": "عسل با نام محلی سیاه تلو؛ رنگ و طعم دقیق وابسته به منشأ و برداشت است.",
+        "description": "## معرفی عسل سیاه تلو\n\n«سیاه تلو» نامی محلی برای این محصول است. چون نام‌های محلی گیاهان ممکن است در مناطق مختلف به گونه‌های متفاوت اشاره کنند، بدون تأیید زنبوردار یا شناسایی گیاه نمی‌توان منشأ گیاه‌شناسی، رنگ یا ترکیب دقیق این عسل را قطعی اعلام کرد. این معرفی از نسبت‌دادن خواص درمانی اثبات‌نشده خودداری می‌کند.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۵۰۰ گرم است (۸۰۰٬۰۰۰ تومان)؛ برای یک کیلو تعداد ۲ و برای دو کیلو تعداد ۴ را انتخاب کنید. هر کیلوگرم ۱٬۶۰۰٬۰۰۰ تومان؛ نیم‌کیلو ۸۰۰٬۰۰۰ تومان؛ یک کیلو ۱٬۶۰۰٬۰۰۰ تومان؛ دو کیلو ۳٬۲۰۰٬۰۰۰ تومان. بسته‌بندی‌های بزرگ‌تر با هماهنگی تلفنی.\n\nدر جای خشک و خنک و ظرف دربسته نگهداری شود. به کودکان زیر یک سال عسل ندهید.",
+        "price": Decimal("800000"), "stock": 40, "size_value": Decimal("500"), "size_unit": "g",
+        "image_queries": ["Iran wildflower honey bee flowers dark honey", "wild honey bee forage flowers", "dark honey in glass jar"],
     },
     {
-        "name": "عسل خارشتر",
-        "stable_slug": "khareshtor",
-        "category": "عسل‌ها",
-        "short_description": "عسل خاص گیاه خارشتر",
-        "description": (
-            "عسل خارشتر از گیاه بومی مناطق کویری و نیمه‌خشک ایران تهیه می‌شود و در طب "
-            "سنتی به خواص گوارشی و ضدسرفه‌ی آن اشاره می‌شود. طعم آن نسبت به سایر "
-            "عسل‌های این مجموعه کمی تندتر و خاص‌تر است و طرفداران خاص خودش را دارد."
-        ),
-        "price": Decimal("410000"),
-        "stock": 25,
-        "size_value": Decimal("450"),
-        "size_unit": "g",
+        "name": "عسلک ترنجبین", "stable_slug": "blossom", "category": "عسل‌ها",
+        "short_description": "عسلک ترنجبین؛ محصولی متمایز از عسل شهد گل و وابسته به منبع عسلک.",
+        "description": "## معرفی عسلک ترنجبین\n\nعسلک با عسل گل تفاوت دارد: زنبورها می‌توانند مواد شیرین عسلکِ حاصل از ترشحات گیاه یا حشرات مکنده شیره گیاه را جمع‌آوری کنند. عسلک‌ها بسته به منشأ می‌توانند رنگ تیره‌تر و ترکیب قندی و معدنی متفاوتی از عسل‌های شهدی داشته باشند. برای نسبت‌دادن ترکیب دقیق این محصول به ترنجبین، تأیید منشأ محموله اهمیت دارد.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۵۰۰ گرم است (۸۰۰٬۰۰۰ تومان)؛ برای یک کیلو تعداد ۲ و برای دو کیلو تعداد ۴ را انتخاب کنید. هر کیلوگرم ۱٬۶۰۰٬۰۰۰ تومان؛ نیم‌کیلو ۸۰۰٬۰۰۰ تومان؛ یک کیلو ۱٬۶۰۰٬۰۰۰ تومان؛ دو کیلو ۳٬۲۰۰٬۰۰۰ تومان. وزن‌های بالاتر با هماهنگی قابل سفارش است.\n\nدر ظرف دربسته و دور از گرما و رطوبت نگهداری شود. به کودکان زیر یک سال عسل ندهید.",
+        "price": Decimal("800000"), "stock": 40, "size_value": Decimal("500"), "size_unit": "g",
+        "image_queries": ["Tamarisk manna honeydew honey plant", "honeydew secretion plant close up", "honeydew honey dark amber jar"],
     },
     {
-        "name": "عسل ترنجبین",
-        "stable_slug": "blossom",
-        "category": "عسل‌ها",
-        "short_description": "عسل مخصوص همراه با ترنجبین",
-        "description": (
-            "این عسل با ترکیب طبیعی ترنجبین تهیه شده و در طب سنتی برای تسکین سرفه و "
-            "گلودرد فصلی استفاده می‌شود. بافت غلیظ‌تر و طعم متفاوت آن، آن را به گزینه‌ی "
-            "مناسبی برای فصل‌های سرد سال و همراهی با دمنوش‌های گیاهی تبدیل کرده است."
-        ),
-        "price": Decimal("490000"),
-        "stock": 20,
-        "size_value": Decimal("450"),
-        "size_unit": "g",
+        "name": "عسل آفتابگردان", "stable_slug": "sunflower-honey", "category": "عسل‌ها",
+        "short_description": "عسل با منشأ گل آفتابگردان؛ رنگ و سرعت بلوره‌شدن وابسته به ترکیب قندی است.",
+        "description": "## معرفی عسل آفتابگردان\n\nعسل آفتابگردان از شهد گل‌های آفتابگردان به‌دست می‌آید. رنگ آن می‌تواند زرد روشن تا کهربایی باشد و در برخی نمونه‌ها بلوره‌شدن نسبتاً زود رخ می‌دهد؛ این رفتار به ترکیب قندی و شرایط نگهداری وابسته است. رنگ و سرعت بلوره‌شدن به‌تنهایی معیار قطعی اصالت نیستند.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۵۰۰ گرم است (۸۰۰٬۰۰۰ تومان)؛ برای یک کیلو تعداد ۲ و برای دو کیلو تعداد ۴ را انتخاب کنید. هر کیلوگرم ۱٬۶۰۰٬۰۰۰ تومان؛ نیم‌کیلو ۸۰۰٬۰۰۰ تومان؛ یک کیلو ۱٬۶۰۰٬۰۰۰ تومان؛ دو کیلو ۳٬۲۰۰٬۰۰۰ تومان. برای وزن‌های بالاتر تماس بگیرید.\n\nدر ظرف دربسته و دور از نور مستقیم نگهداری شود. به کودکان زیر یک سال عسل ندهید.",
+        "price": Decimal("800000"), "stock": 40, "size_value": Decimal("500"), "size_unit": "g",
+        "image_queries": ["Helianthus annuus sunflower field honey bee", "sunflower head bee close up", "sunflower honey jar golden"],
     },
     {
-        "name": "عسل + ژل رویال",
-        "stable_slug": "mix",
-        "category": "ژل رویال و ترکیبات ویژه",
-        "short_description": "ترکیب عسل طبیعی و ژل رویال تازه",
-        "description": (
-            "ترکیبی از عسل خالص نیکا و ژل رویال تازه، تهیه‌شده برای کسانی که به دنبال "
-            "یک مکمل تقویتی طبیعی هستند. ژل رویال یکی از غنی‌ترین ترکیبات طبیعی از نظر "
-            "ویتامین‌های گروه B و اسیدهای آمینه است و در این محصول با بهترین عسل نیکا "
-            "همراه شده تا مصرف روزانه‌ی آن آسان‌تر و خوشمزه‌تر باشد."
-        ),
-        "price": Decimal("890000"),
-        "previous_price": Decimal("950000"),
-        "stock": 15,
-        "is_featured": True,
-        "size_value": Decimal("300"),
-        "size_unit": "g",
+        "name": "ژل رویال", "stable_slug": "royal-jelly", "category": "ژل رویال و ترکیبات ویژه",
+        "short_description": "ژل رویال تازه؛ قیمت هر گرم ۶۰٬۰۰۰ تومان؛ بسته‌های ۱۰، ۱۵، ۵۰ و ۱۰۰ گرمی.",
+        "description": "## معرفی ژل رویال\n\nژل رویال ماده‌ای ترشح‌شده از زنبورهای کارگر است که در تغذیه لاروها و ملکه نقش دارد. این محصول با عسل متفاوت است و شرایط نگهداری آن باید مطابق دستور تولیدکننده و زنجیره سردِ مناسب محصول باشد. از ادعاهای درمانی قطعی بدون شواهد معتبر پرهیز می‌کنیم.\n\n## بسته‌بندی و قیمت\n\nواحد فروش در سایت ۱۰ گرم است؛ برای ۵۰ گرم تعداد ۵ و برای ۱۰۰ گرم تعداد ۱۰ را انتخاب کنید. بسته ۱۵ گرمی با هماهنگی تلفنی ارسال می‌شود. قیمت هر گرم ژل رویال ۶۰٬۰۰۰ تومان است.\n\n- بسته ۱۰ گرمی: ۶۰۰٬۰۰۰ تومان\n- بسته ۱۵ گرمی: ۹۰۰٬۰۰۰ تومان\n- بسته ۵۰ گرمی: ۳٬۰۰۰٬۰۰۰ تومان\n- بسته ۱۰۰ گرمی: ۶٬۰۰۰٬۰۰۰ تومان\n\nاین قیمت‌ها بر اساس نرخ اعلام‌شده هر گرم محاسبه شده‌اند.\n\n## نگهداری و احتیاط\n\nژل رویال باید مطابق شرایط اعلام‌شده از سوی عرضه‌کننده و با رعایت زنجیره سردِ مناسب نگهداری شود. افراد دارای حساسیت به فرآورده‌های زنبورعسل یا آسم باید پیش از مصرف احتیاط کنند؛ در صورت بروز واکنش حساسیتی مصرف را متوقف کرده و کمک پزشکی بگیرند.",
+        "price": Decimal("600000"), "stock": 40, "size_value": Decimal("10"), "size_unit": "g", "is_featured": True, "is_active": True,
+        "image_queries": ["fresh royal jelly in glass dish", "royal jelly honey bee close up", "royal jelly product jar white cream"],
     },
 ]
-
-# (top_color, bottom_color) gradient per stable_slug — purely cosmetic and
-# deterministic, so the same product always gets the same placeholder look.
-PLACEHOLDER_PALETTE = {
-    "citrus": ("#F6CE7C", "#C07A2B"),
-    "sunflower": ("#EFDA9A", "#B08A2E"),
-    "dark": ("#8C5A2B", "#3A230D"),
-    "forest": ("#E7BD68", "#8A5A1E"),
-    "khareshtor": ("#DCA84A", "#7A4E14"),
-    "blossom": ("#F2D68E", "#B4832A"),
-    "mix": ("#EEC257", "#8E5F17"),
-}
-
-# A handful of demo orders for the demo customer, spread across the
-# fulfillment workflow so the staff order-list has something to show.
-DEMO_ORDER_STATUSES = [
-    Order.Status.PENDING,
-    Order.Status.CONFIRMED,
-    Order.Status.PREPARING,
-    Order.Status.SHIPPED,
-    Order.Status.DELIVERED,
-]
-
-# (stable_slug, quantity) per order stage — varied on purpose so the demo
-# order list doesn't look like the same line repeated five times.
-DEMO_ORDER_LINES = {
-    Order.Status.PENDING: [("citrus", 2)],
-    Order.Status.CONFIRMED: [("dark", 1), ("blossom", 1)],
-    Order.Status.PREPARING: [("mix", 1)],
-    Order.Status.SHIPPED: [("forest", 3)],
-    Order.Status.DELIVERED: [("sunflower", 2), ("khareshtor", 1)],
-}
 
 # Ported from frontend/lib/blog.js — same title/excerpt/tag/slug/author so
 # the backend has the same real editorial content as the (still locally
@@ -360,95 +257,117 @@ BLOG_POSTS = [
             "در مصرف آن با احتیاط و با مشورت پزشک عمل کنند."
         ),
     },
+    {
+        "slug": "honey-and-infants",
+        "title": "چرا به نوزاد زیر یک سال عسل نمی‌دهیم؟",
+        "tag": "ایمنی",
+        "author": "تیم نیکا",
+        "cover_image_url": "",
+        "excerpt": "توصیه‌ی پزشکی برای نوزادان زیر ۱۲ ماه چیست و چرا حتی یک چشیدن کوچک هم توصیه نمی‌شود؟",
+        "published_at": datetime(2026, 9, 10, 9, 0, tzinfo=dt_timezone.utc),
+        "body": (
+            "## توصیه‌ی روشن پزشکی\n\n"
+            "عسل برای کودکان بزرگ‌تر و بزرگسالان غذای رایجی است، اما مراجع بهداشتی و "
+            "کودکان توصیه می‌کنند به نوزاد زیر ۱۲ ماه هیچ نوع عسل داده نشود. این توصیه "
+            "درباره‌ی عسل خانگی، صنعتی و حتی عسلی که روی پستانک مالیده می‌شود یکسان است.\n\n"
+            "## دلیل چیست؟\n\n"
+            "عسل ممکن است حاوی اسپورهای خفته‌ی باکتری «کلستریدیوم بوتولینوم» باشد. در "
+            "روده‌ی بالغ‌تر کودکان بزرگ‌تر و بزرگسالان این اسپورها معمولاً فعال نمی‌شوند، "
+            "اما در روده‌ی نارس نوزاد می‌توانند جوانه بزنند و سمی تولید کنند که اعصاب را "
+            "تحت‌تأثیر قرار می‌دهد. این بیماری «بوتولیسم نوزادی» نام دارد؛ نادر است، "
+            "ولی جدی است.\n\n"
+            "## عسل تنها منبع نیست\n\n"
+            "اسپورهای این باکتری در خاک و گردوغبار هم وجود دارند، بنابراین عسل تنها "
+            "منبع احتمالی نیست. با این حال عسل منبعی است که می‌توان به‌سادگی از آن "
+            "پرهیز کرد؛ به همین دلیل توصیه‌ی «عسل ندهید» تا پایان یک‌سالگی ثابت مانده است.\n\n"
+            "## نکات عملی برای خانواده‌ها\n\n"
+            "عسل را به آب، شیرخشک، فرنی یا غذای نوزاد اضافه نکنید و پستانک را در عسل "
+            "نزنید. شیر مادر بوتولیسم را منتقل نمی‌کند؛ مادری که عسل می‌خورد نگران "
+            "انتقال آن از راه شیر نیست. پس از ۱۲ ماهگی، برای کودکان سالم این محدودیت "
+            "معمولاً برداشته می‌شود؛ اگر سابقه‌ی بیماری یا حساسیت خاصی دارید، با پزشک "
+            "کودک مشورت کنید.\n\n"
+            "## چه زمانی باید فوراً به پزشک مراجعه کرد؟\n\n"
+            "یبوست تازه، گریه‌ی ضعیف، مکیدن ضعیف، افتادگی پلک، شل‌بودن بدن، از دست "
+            "دادن کنترل سر یا مشکل تنفسی در نوزاد نشانه‌هایی‌اند که باید فوری بررسی شوند.\n\n"
+            "## منابع\n\n"
+            "UF/IFAS Extension — Infant Botulism and Honey: https://ask.ifas.ufl.edu/publication/aa142\n\n"
+            "Michigan State University Extension — Babies and honey don't go together: https://www.canr.msu.edu/news/babies_and_honey_dont_go_together\n\n"
+            "Poison Control — Don't feed honey to infants: https://www.poison.org/articles/dont-feed-honey-to-infants\n\n"
+            "این مطلب جنبه‌ی آموزشی دارد و جایگزین مشاوره‌ی پزشک نیست."
+        ),
+    },
+    {
+        "slug": "royal-jelly-guide",
+        "title": "ژل رویال چیست و پیش از مصرف چه نکاتی را باید بدانیم؟",
+        "tag": "راهنما",
+        "author": "تیم نیکا",
+        "cover_image_url": "",
+        "excerpt": "معرفی ژل رویال، نکات نگهداری و هشدارهای مهم درباره‌ی حساسیت و مصرف همراه با دارو.",
+        "published_at": datetime(2026, 9, 24, 9, 0, tzinfo=dt_timezone.utc),
+        "body": (
+            "## ژل رویال چیست؟\n\n"
+            "ژل رویال ماده‌ای شیری‌رنگ و غنی است که زنبورهای کارگر ترشح می‌کنند و "
+            "تغذیه‌ی لاروهای جوان و ملکه‌ی کندو با آن انجام می‌شود. این ماده با عسل "
+            "تفاوت دارد و شرایط نگهداری و مصرفش هم متفاوت است.\n\n"
+            "## درباره‌ی «خواص» چه باید گفت؟\n\n"
+            "برای ژل رویال ادعاهای زیادی مطرح می‌شود، اما منابع پزشکی معتبر می‌گویند "
+            "اثربخشی آن برای درمان بیماری‌ها قطعی نشده و نباید جای داروی تجویزشده را "
+            "بگیرد. به همین دلیل در نیکا برای این محصول ادعای درمانی مطرح نمی‌کنیم و "
+            "آن را به‌عنوان یک فرآورده‌ی زنبورعسل معرفی می‌کنیم.\n\n"
+            "## مهم‌ترین هشدار: حساسیت\n\n"
+            "ژل رویال یک فرآورده‌ی زنبورعسل است و ممکن است واکنش آلرژیک ایجاد کند؛ "
+            "از کهیر و خارش پوست تا مشکلات تنفسی و، در موارد نادر، واکنش شدید. "
+            "افراد دارای آسم، حساسیت‌های فصلی یا اگزما و کسانی که به محصولات "
+            "زنبورعسل (گرده، پروپولیس، نیش زنبور) حساسیت دارند، در معرض خطر بیشتری هستند. "
+            "گزارش‌هایی هست که واکنش در همان اولین مصرف هم رخ داده است. در صورت "
+            "کهیر، تورم لب و صورت یا تنگی نفس، مصرف را قطع کنید و فوراً کمک پزشکی بگیرید.\n\n"
+            "## چه کسانی باید حتماً با پزشک مشورت کنند؟\n\n"
+            "زنان باردار و شیرده (شواهد کافی برای اطمینان از ایمنی وجود ندارد)، "
+            "افرادی که داروهای رقیق‌کننده‌ی خون مثل وارفارین یا داروی فشار خون "
+            "مصرف می‌کنند، و هر کسی که بیماری زمینه‌ای دارد، پیش از شروع مصرف باید "
+            "با پزشک یا داروساز صحبت کند.\n\n"
+            "## نگهداری\n\n"
+            "ژل رویال را مطابق دستور روی بسته‌بندی و با رعایت زنجیره‌ی سرد "
+            "(معمولاً در یخچال) نگه دارید، در ظرف دربسته و دور از نور و گرما. "
+            "از آلوده‌کردن ظرف با قاشق خیس خودداری کنید.\n\n"
+            "## منابع\n\n"
+            "Frontiers/PMC — Royal jelly allergy review: https://pmc.ncbi.nlm.nih.gov/articles/PMC7266330\n\n"
+            "University of Michigan Health — Royal jelly: https://uofmhealth.org/health-library/d04481a1\n\n"
+            "Memorial Sloan Kettering — Royal Jelly: https://mskcc.org/pdf/cancer-care/patient-education/herbs/royal-jelly\n\n"
+            "این مطلب جنبه‌ی آموزشی دارد و جایگزین مشاوره‌ی پزشک نیست."
+        ),
+    },
 ]
 
 
-# ---------------------------------------------------------------------------
-# Real photos (products + posters)
-# ---------------------------------------------------------------------------
-# `python manage.py seed_demo` DOWNLOADS every photo below once and stores it
-# inside the project, so afterwards nothing is hotlinked:
-#
-#   1. backend/products/seed_images/downloaded/<key>.jpg   (download cache —
-#      a re-run reuses these files instead of downloading again; delete a
-#      file, or pass --refresh, to fetch it again; drop your own photo here
-#      with the same name to override a download)
-#   2. frontend/public/images/products/<slug>.jpg|<slug>-detail.jpg and
-#      frontend/public/images/posters/<key>.jpg   (served by Next.js — these
-#      are the exact paths the storefront already references)
-#   3. Django MEDIA_ROOT (ProductImage / MediaAsset rows) for the API/admin
-#
-# To change a photo, edit its URL list below (the first URL that downloads
-# wins; the following ones are fallbacks) and run `seed_demo --refresh`.
-SEED_IMAGES_DIR = Path(__file__).resolve().parents[2] / "seed_images"      # bundled offline fallbacks
-ASSETS_CACHE_DIR = SEED_IMAGES_DIR / "downloaded"                          # download cache
-FRONTEND_PUBLIC_DIR = Path(__file__).resolve().parents[4] / "frontend" / "public"
+# Real public Pexels photography used by seed_demo.
+# The command downloads, validates, converts and stores these images locally in
+# Django MEDIA_ROOT so ProductImage / MediaAsset records point at real local
+# files instead of broken static placeholders or remote hotlinks.
+REAL_IMAGE_SOURCES = {
+    # Product photography (all honey-focused)
+    "citrus-primary": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
+    "citrus-detail": "https://images.pexels.com/photos/10819687/pexels-photo-10819687.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "sunflower-primary": "https://commons.wikimedia.org/wiki/Special:FilePath/Apis_mellifera_-_Brassica_napus_-_Valingu.jpg",
+    "sunflower-detail": "https://images.pexels.com/photos/8140790/pexels-photo-8140790.jpeg?cs=srgb&dl=pexels-micheile-8140790.jpg&fm=jpg",
+    "dark-primary": "https://images.pexels.com/photos/7990484/pexels-photo-7990484.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "dark-detail": "https://images.pexels.com/photos/30666803/pexels-photo-30666803.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "forest-primary": "https://images.pexels.com/photos/18581552/pexels-photo-18581552.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "forest-detail": "https://images.pexels.com/photos/12370134/pexels-photo-12370134.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "khareshtor-primary": "https://images.pexels.com/photos/35042437/pexels-photo-35042437.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "khareshtor-detail": "https://images.pexels.com/photos/35042436/pexels-photo-35042436.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "blossom-primary": "https://images.pexels.com/photos/18581553/pexels-photo-18581553.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "blossom-detail": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
+    "mix-primary": "https://images.pexels.com/photos/10819687/pexels-photo-10819687.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "mix-detail": "https://images.pexels.com/photos/12370134/pexels-photo-12370134.jpeg?auto=compress&cs=tinysrgb&w=1600",
 
-_PX = "https://images.pexels.com/photos/"
-PEXELS_URLS = {
-    "8140790": _PX + "8140790/pexels-photo-8140790.jpeg?cs=srgb&dl=pexels-micheile-8140790.jpg&fm=jpg",
-    "5247983": _PX + "5247983/pexels-photo-5247983.jpeg?cs=srgb&dl=pexels-anete-lusina-5247983.jpg&fm=jpg",
-    "5247982": _PX + "5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg",
-    "18751139": _PX + "18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
-    "18581553": _PX + "18581553/pexels-photo-18581553.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "30666803": _PX + "30666803/pexels-photo-30666803.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "1638280": _PX + "1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "6551047": _PX + "6551047/pexels-photo-6551047.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "8805426": _PX + "8805426/pexels-photo-8805426.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "11771949": _PX + "11771949/pexels-photo-11771949.jpeg?cs=srgb&dl=pexels-annmteu-11771949.jpg&fm=jpg",
-    "4480158": _PX + "4480158/pexels-photo-4480158.jpeg?cs=srgb&dl=pexels-ian-panelo-4480158.jpg&fm=jpg",
-    "8500508": _PX + "8500508/pexels-photo-8500508.jpeg?cs=srgb&dl=pexels-alexfalconer-8500508.jpg&fm=jpg",
-    "11284797": _PX + "11284797/pexels-photo-11284797.jpeg?cs=srgb&dl=pexels-micheile-11284797.jpg&fm=jpg",
-    "4921856": _PX + "4921856/pexels-photo-4921856.jpeg?cs=srgb&dl=pexels-ekaterinabelinskaya-4921856.jpg&fm=jpg",
-    "5634207": _PX + "5634207/pexels-photo-5634207.jpeg?cs=srgb&dl=pexels-adonyi-foto-5634207.jpg&fm=jpg",
-}
-
-
-def _urls(*photo_ids):
-    return [PEXELS_URLS[photo_id] for photo_id in photo_ids]
-
-
-# Product photo candidates, per stable slug (first one that downloads wins).
-# The "detail" (close-up) image of each product is generated from its main
-# photo as a zoomed crop, unless you place <slug>-detail.jpg in the cache dir.
-PRODUCT_PHOTO_SOURCES = {
-    "citrus": _urls("8140790", "1638280"),
-    "sunflower": _urls("18751139", "8140790"),
-    "dark": _urls("18581553", "30666803"),
-    "forest": _urls("30666803", "5247983"),
-    "khareshtor": _urls("5247983", "6551047"),
-    "blossom": _urls("1638280", "18581553"),
-    "mix": _urls("5247982", "8805426"),
-}
-
-# Where on the main photo the close-up crop is centred (x, y as 0..1 fractions).
-DETAIL_CROP_ANCHORS = {
-    "citrus": (0.50, 0.55),
-    "sunflower": (0.40, 0.50),
-    "dark": (0.55, 0.50),
-    "forest": (0.45, 0.60),
-    "khareshtor": (0.60, 0.45),
-    "blossom": (0.50, 0.40),
-    "mix": (0.45, 0.55),
-}
-
-# Posters / banners / blog covers. Key -> candidate URLs. The key is also the
-# file name (frontend/public/images/posters/<key>.jpg).
-POSTER_SOURCES = {
-    # general content / media library (also stored as MediaAsset rows)
-    "media-hero": _urls("18751139"),
-    "media-about": _urls("5247983"),
-    "media-blog": _urls("18581553"),
-    "media-bee": _urls("5247982"),            # also the intro-video poster
-    "media-contact": _urls("8140790"),
-    "media-festival": _urls("30666803"),
-    # blog covers used by the storefront (frontend/lib/blog.js)
-    "blog-spot-fake-honey": _urls("11771949"),
-    "blog-storage-tips": _urls("4480158"),
-    "blog-crystallization": _urls("8500508"),
-    "blog-cooking-with-honey": _urls("11284797"),
-    "blog-honey-types": _urls("4921856"),
-    "blog-honey-cinnamon": _urls("5634207"),
+    # General content/media library photography
+    "media-hero": "https://images.pexels.com/photos/18751139/pexels-photo-18751139.png?cs=srgb&dl=pexels-fernanda-nunez-760836228-18751139.jpg&fm=jpg",
+    "media-about": "https://images.pexels.com/photos/5247983/pexels-photo-5247983.jpeg?cs=srgb&dl=pexels-anete-lusina-5247983.jpg&fm=jpg",
+    "media-blog": "https://images.pexels.com/photos/18581553/pexels-photo-18581553.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "media-bee": "https://images.pexels.com/photos/5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg",
+    "media-contact": "https://images.pexels.com/photos/8140790/pexels-photo-8140790.jpeg?cs=srgb&dl=pexels-micheile-8140790.jpg&fm=jpg",
+    "media-festival": "https://images.pexels.com/photos/30666803/pexels-photo-30666803.jpeg?auto=compress&cs=tinysrgb&w=1600",
 }
 
 MEDIA_ASSETS = [
@@ -467,34 +386,23 @@ BLOG_MEDIA_KEYS = {
     "cooking-with-honey": "media-contact",
     "honey-types": "media-festival",
     "honey-cinnamon": "media-blog",
+    "honey-and-infants": "media-about",
+    "royal-jelly-guide": "media-contact",
 }
 
 
-_BROWSER_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 NikaHoneySeed/2.0"
-    ),
-    "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-}
-
-
-def _download_real_image(source_url, *, timeout=30, max_size=10 * 1024 * 1024, retries=3):
-    """Download one photo and return it as optimized JPEG bytes (max 1800px)."""
-    payload = None
-    last_error = None
-    for attempt in range(1, retries + 1):
-        try:
-            request = Request(source_url, headers=_BROWSER_HEADERS)
-            with urlopen(request, timeout=timeout) as response:
-                payload = response.read(max_size + 1)
-            break
-        except Exception as exc:  # network / HTTP errors — retry with backoff
-            last_error = exc
-            if attempt < retries:
-                time.sleep(attempt)
-    if payload is None:
-        raise CommandError(f"Could not download seed image: {source_url}\n{last_error}") from last_error
+def _download_real_image(source_url, *, timeout=30, max_size=10 * 1024 * 1024):
+    request = Request(source_url, headers={"User-Agent": "NikaHoneySeed/1.0"})
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            payload = response.read(max_size + 1)
+    except Exception as exc:
+        raise CommandError(
+            f"Could not download seed image: {source_url}\n{exc}\n"
+            "Hint: the seed needs internet access to Wikimedia Commons / Pexels. "
+            "If these sites are blocked on your network, run it through a VPN or set "
+            "HTTPS_PROXY / HTTP_PROXY first."
+        ) from exc
 
     if len(payload) > max_size:
         raise CommandError(f"Seed image is too large (>10MB): {source_url}")
@@ -509,203 +417,41 @@ def _download_real_image(source_url, *, timeout=30, max_size=10 * 1024 * 1024, r
         raise CommandError(f"Downloaded seed asset is not a valid image: {source_url}\n{exc}") from exc
 
 
-def _make_detail_crop(jpeg_bytes, anchor):
-    """A zoomed close-up crop of a photo (used as the product's 2nd image)."""
-    try:
-        image = Image.open(BytesIO(jpeg_bytes)).convert("RGB")
-        width, height = image.size
-        side = int(min(width, height) * 0.62)
-        center_x, center_y = int(width * anchor[0]), int(height * anchor[1])
-        left = max(0, min(width - side, center_x - side // 2))
-        top = max(0, min(height - side, center_y - side // 2))
-        crop = image.crop((left, top, left + side, top + side))
-        crop = crop.resize((1200, 1200), Image.Resampling.LANCZOS)
-        out = BytesIO()
-        crop.save(out, format="JPEG", quality=88, optimize=True)
-        return out.getvalue()
-    except Exception:
-        return jpeg_bytes  # not a decodable photo (e.g. mocked in tests) — reuse as-is
-
-
-def _load_local_seed_image(name):
-    """Read an image that ships inside the project (offline fallback)."""
-    path = SEED_IMAGES_DIR / name
-    if not path.is_file():
-        raise CommandError(f"Missing bundled seed image: {path}")
-    payload = path.read_bytes()
-    try:
-        Image.open(BytesIO(payload)).verify()
-    except Exception as exc:
-        raise CommandError(f"Bundled seed image is not a valid image: {path}\n{exc}") from exc
-    return payload
-
-
-def _save_to_frontend(relative_path, payload):
-    """Copy a downloaded photo into frontend/public so Next.js serves it from the project."""
-    if not FRONTEND_PUBLIC_DIR.is_dir():
-        return False
-    target = FRONTEND_PUBLIC_DIR / relative_path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(payload)
-    return True
-
-
 def _media_url(file_field):
+    """Return the public URL of a stored file.
+
+    Local FileSystemStorage gives a root-relative path ("/media/x.jpg"); an
+    S3/R2 backend gives an absolute https URL which must be kept as-is.
+    """
     value = file_field.url if file_field else ""
-    return "/" + value.lstrip("/") if value else ""
+    if not value:
+        return ""
+    if value.startswith(("http://", "https://")):
+        return value
+    return "/" + value.lstrip("/")
 
 
 class Command(BaseCommand):
-    help = (
-        "Populate ALL development/demo data (categories, products, users, orders, content, blog) and "
-        "download the real product photos + posters into the project."
-    )
+    help = "Populate ALL development/demo data (categories, products, images, users, orders, content, blog)."
 
+    @transaction.atomic
     def add_arguments(self, parser):
         parser.add_argument(
-            "--refresh",
-            action="store_true",
-            help="Re-download every photo/poster and replace the seeded images with the new files.",
-        )
-        parser.add_argument(
-            "--offline",
-            action="store_true",
-            help="Do not download anything: use the files already in the download cache (or the bundled fallbacks).",
-        )
-        parser.add_argument(
-            "--no-uploads",
-            action="store_true",
-            help=(
-                "Do not create ProductImage / MediaAsset rows (files under MEDIA_ROOT). Use this when seeding "
-                "a deployed database (e.g. Neon + Render) whose backend has no persistent media storage: the "
-                "storefront then uses the static images shipped in frontend/public/images."
-            ),
-        )
-        parser.add_argument(
-            "--strict",
-            action="store_true",
-            help="Fail instead of falling back to bundled illustrations when a download does not work.",
+            "--require-images", action="store_true",
+            help="Abort if any product ends up with fewer than 3 photos (default: warn and continue "
+                 "so products/content are still created).",
         )
 
     def handle(self, *args, **options):
-        # Downloads run BEFORE the DB transaction so a slow network never holds
-        # a database lock, and a failed download can never leave half-seeded rows.
-        self.refresh = options["refresh"]
-        self.offline = options["offline"]
-        self.strict = options["strict"]
-        self.no_uploads = options["no_uploads"]
-        assets = self._prepare_assets()
-
-        with transaction.atomic():
-            category_map = self._seed_categories()
-            products_by_slug = self._seed_products(category_map)
-            if not self.no_uploads:
-                self._seed_product_images(products_by_slug, assets)
-            demo_user = self._seed_users()
-            self._seed_orders(demo_user, products_by_slug)
-            media_map = {} if self.no_uploads else self._seed_media(assets)
-            self._seed_content(media_map)
-            self._seed_blog(media_map)
-            self._seed_settings()
-            self._seed_addresses(demo_user)
+        self.require_images = options.get("require_images", False)
+        category_map = self._seed_categories()
+        products_by_slug = self._seed_products(category_map)
+        self._seed_product_images(products_by_slug)
+        media_map = self._seed_media()
+        self._seed_content(media_map)
+        self._seed_blog(media_map)
+        self._seed_settings()
         self.stdout.write(self.style.SUCCESS("Seed data is up to date."))
-
-    # ------------------------------------------------------------------
-    # Photo download / cache layer
-    # ------------------------------------------------------------------
-
-    def _fetch_photo(self, key, urls):
-        """
-        Return (bytes, source) where source is "cache" | "download" | None.
-        Order: cached file in the project -> download (first working URL).
-        """
-        cache_path = ASSETS_CACHE_DIR / f"{key}.jpg"
-        if cache_path.is_file() and not self.refresh:
-            return cache_path.read_bytes(), "cache"
-        if self.offline:
-            return None, None
-        for url in urls:
-            try:
-                payload = _download_real_image(url)
-            except CommandError as exc:
-                self.stderr.write(self.style.WARNING(f"  ! {key}: {str(exc).splitlines()[0]}"))
-                continue
-            ASSETS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            cache_path.write_bytes(payload)
-            self.stdout.write(f"  downloaded: {key} ({len(payload) // 1024} KB)")
-            return payload, "download"
-        return None, None
-
-    def _prepare_assets(self):
-        """
-        Download (or reuse from the project cache) every product photo and
-        poster, and publish them to frontend/public. Returns
-        {"products": {slug: {"primary": bytes, "detail": bytes, "is_photo": bool}},
-         "posters": {key: bytes}}.
-        """
-        products, posters = {}, {}
-        missing = []
-        published = 0
-
-        for slug, urls in PRODUCT_PHOTO_SOURCES.items():
-            primary, source = self._fetch_photo(f"product-{slug}-primary", urls)
-            if primary is None:
-                missing.append(f"product-{slug}")
-                products[slug] = {
-                    "primary": _load_local_seed_image(f"{slug}-primary.jpg"),
-                    "detail": _load_local_seed_image(f"{slug}-detail.jpg"),
-                    "is_photo": False,
-                }
-                continue
-
-            detail_path = ASSETS_CACHE_DIR / f"product-{slug}-detail.jpg"
-            if detail_path.is_file() and not self.refresh:
-                detail = detail_path.read_bytes()
-            else:
-                detail = _make_detail_crop(primary, DETAIL_CROP_ANCHORS[slug])
-                ASSETS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-                detail_path.write_bytes(detail)
-            products[slug] = {"primary": primary, "detail": detail, "is_photo": True}
-            published += _save_to_frontend(f"images/products/{slug}.jpg", primary)
-            published += _save_to_frontend(f"images/products/{slug}-detail.jpg", detail)
-
-        for key, urls in POSTER_SOURCES.items():
-            payload, source = self._fetch_photo(key, urls)
-            if payload is None:
-                # Fall back to whatever poster file the frontend already ships.
-                placeholder = FRONTEND_PUBLIC_DIR / "images" / "posters" / f"{key}.jpg"
-                if placeholder.is_file():
-                    payload = placeholder.read_bytes()
-                missing.append(key)
-                if payload is not None:
-                    posters[key] = payload
-                continue
-            posters[key] = payload
-            published += _save_to_frontend(f"images/posters/{key}.jpg", payload)
-
-        if missing and self.strict:
-            raise CommandError(
-                "Could not download: " + ", ".join(missing) + ". Check your internet connection "
-                "(or the URLs at the top of seed_demo.py) and run again."
-            )
-        if missing:
-            self.stderr.write(
-                self.style.WARNING(
-                    f"  ! {len(missing)} image(s) could not be downloaded and use the bundled fallbacks: "
-                    + ", ".join(missing)
-                    + ". Run `python manage.py seed_demo` again when the network works "
-                    "(use --refresh to force)."
-                )
-            )
-        self.stdout.write(
-            self._status_line(
-                "photos",
-                f"{len(PRODUCT_PHOTO_SOURCES)} products + {len(POSTER_SOURCES)} posters; "
-                f"{published} file(s) written to frontend/public/images",
-                published > 0,
-            )
-        )
-        return {"products": products, "posters": posters}
 
     # ------------------------------------------------------------------
     # Categories / products / images
@@ -726,16 +472,23 @@ class Command(BaseCommand):
         products_by_slug = {}
         for product_data in PRODUCTS:
             category = category_map[product_data["category"]]
+            public_slug = product_data["stable_slug"]
+            # Public URL slug == stable_slug (matches frontend/lib/products.js).
+            # Free it first if an older, differently named product holds it.
+            Product.objects.filter(slug=public_slug).exclude(name=product_data["name"]).update(
+                slug=f"{public_slug}-legacy"
+            )
             product, created = Product.objects.update_or_create(
                 name=product_data["name"],
                 defaults={
+                    "slug": public_slug,
                     "category": category,
                     "short_description": product_data["short_description"],
                     "description": product_data["description"],
                     "price": product_data["price"],
                     "previous_price": product_data.get("previous_price"),
                     "stock": product_data["stock"],
-                    "is_active": True,
+                    "is_active": product_data.get("is_active", True),
                     "is_featured": product_data.get("is_featured", False),
                     "size_value": product_data.get("size_value"),
                     "size_unit": product_data.get("size_unit", ""),
@@ -745,149 +498,102 @@ class Command(BaseCommand):
             self.stdout.write(self._status_line("product", product.name, created))
         return products_by_slug
 
-    def _seed_product_images(self, products_by_slug, assets):
+    def _seed_product_images(self, products_by_slug):
+        """Download 3–6 locally stored, product-specific photos from Wikimedia Commons.
+
+        Images are searched by botanical/product name, not reused randomly across products.
+        Existing staff-managed images are preserved. A few distinct counts are intentionally
+        used to give product galleries 3–6 images. Wikimedia API/source URLs are stored in
+        the accompanying image-source report after each run.
         """
-        Give each seeded product two photos (main + close-up) taken from the
-        photos downloaded into the project (see _prepare_assets) and copy
-        them into MEDIA_ROOT as ProductImage rows. Staff-managed images are
-        never touched. Images from older seed_demo versions (generated
-        illustrations / previously downloaded photos) are replaced once by
-        the new photos; re-running is a no-op (use --refresh to force).
-        """
-        created_count = 0
-        replaced_count = 0
+        import json
+        import random
+        from urllib.parse import urlencode
+
+        image_counts = {"sunflower": 5, "forest": 4, "citrus": 6, "dark": 5,
+                        "blossom": 4, "sunflower-honey": 6, "royal-jelly": 3}
+        query_map = {item["stable_slug"]: item.get("image_queries", []) for item in PRODUCTS}
+        report = []
         for stable_slug, product in products_by_slug.items():
             existing = list(product.images.all())
-            asset = assets["products"][stable_slug]
+            if existing:
+                # Seed-managed images are replaceable; staff-uploaded images remain untouched.
+                seed_managed = [im for im in existing if im.image and im.image.name.split("/")[-1].startswith("seed-real-")]
+                if not seed_managed:
+                    continue
+                for im in seed_managed:
+                    im.image.delete(save=False)
+                    im.delete()
 
-            def _name(image):
-                return image.image.name.split("/")[-1] if image.image else ""
-
-            def _is_seed_managed(image):
-                name = _name(image)
-                return name.startswith(("seed-photo-", "seed-local-", "seed-real-")) or name in {
-                    f"{stable_slug}-primary.jpg",
-                    f"{stable_slug}-detail.jpg",
-                }
-
-            managed = [image for image in existing if _is_seed_managed(image)]
-
-            # Anything else means a staff upload: never overwrite it.
-            if len(managed) != len(existing):
+            queries = query_map.get(stable_slug, [])
+            target_count = image_counts.get(stable_slug, 3)
+            candidates, seen = [], set()
+            for query in queries:
+                api = "https://commons.wikimedia.org/w/api.php?" + urlencode({
+                    "action": "query", "format": "json", "generator": "search",
+                    "gsrsearch": "filetype:bitmap " + query, "gsrnamespace": 6,
+                    "gsrlimit": 12, "prop": "imageinfo", "iiprop": "url|extmetadata",
+                    "iiurlwidth": 1400,
+                })
+                try:
+                    request = Request(api, headers={"User-Agent": "NikaHoneySeed/1.0 (product catalog image attribution)"})
+                    with urlopen(request, timeout=20) as response:
+                        payload = json.loads(response.read(2 * 1024 * 1024).decode("utf-8"))
+                    for page in payload.get("query", {}).get("pages", {}).values():
+                        info = (page.get("imageinfo") or [{}])[0]
+                        url = info.get("thumburl") or info.get("url")
+                        if not url or url in seen:
+                            continue
+                        title = page.get("title", "")
+                        # Exclude SVG/logo/diagram and avoid unrelated image types.
+                        if not url.lower().split("?")[0].endswith((".jpg", ".jpeg", ".png", ".webp")):
+                            continue
+                        meta = info.get("extmetadata", {})
+                        candidates.append({"url": url, "title": title,
+                                           "license": meta.get("LicenseShortName", {}).get("value", "Unknown"),
+                                           "artist": meta.get("Artist", {}).get("value", "Unknown"),
+                                           "source": "https://commons.wikimedia.org/wiki/" + title.replace(" ", "_")})
+                        seen.add(url)
+                except Exception as exc:
+                    self.stdout.write(self.style.WARNING(f"Image search skipped for {query}: {exc}"))
+                if len(candidates) >= target_count * 2:
+                    break
+            if len(candidates) < 3:
+                msg = f"Could not find at least 3 relevant images for {product.name}. Check internet access or Wikimedia Commons search terms."
+                if self.require_images:
+                    raise CommandError(msg)
+                self.stdout.write(self.style.WARNING(msg + " — continuing without photos for this product."))
                 continue
-            already_photos = any(_name(image).startswith("seed-photo-") for image in managed)
-            if managed and already_photos and not self.refresh:
-                continue
-            # Download failed this time but the product already has images: keep them.
-            if managed and not asset["is_photo"]:
-                continue
-
-            for image in managed:
-                image.image.delete(save=False)
-                image.delete()
-                replaced_count += 1
-
-            prefix = "seed-photo" if asset["is_photo"] else "seed-local"
-            ProductImage.objects.create(
-                product=product,
-                image=ContentFile(asset["primary"], name=f"{prefix}-{stable_slug}-primary.jpg"),
-                alt_text=f"{product.name} — تصویر اصلی",
-                sort_order=0,
-                is_primary=True,
-            )
-            ProductImage.objects.create(
-                product=product,
-                image=ContentFile(asset["detail"], name=f"{prefix}-{stable_slug}-detail.jpg"),
-                alt_text=f"{product.name} — نمای نزدیک",
-                sort_order=1,
-                is_primary=False,
-            )
-            created_count += 1
-
-        self.stdout.write(
-            self._status_line(
-                "product images",
-                f"{created_count} product(s) seeded with downloaded photos; {replaced_count} old image(s) replaced",
-                created_count > 0 or replaced_count > 0,
-            )
-        )
-
-    # ------------------------------------------------------------------
-    # Users
-    # ------------------------------------------------------------------
-
-    def _seed_users(self):
-        demo_email = "demo@nikahoney.local"
-        demo_user, created = User.objects.get_or_create(
-            email=demo_email, defaults={"full_name": "Demo Customer"}
-        )
-        if created:
-            demo_user.set_password("demo-pass-123")
-            demo_user.save()
-        self.stdout.write(self._status_line("user", demo_email, created))
-
-        staff_email = "staff@nikahoney.local"
-        staff_user, created = User.objects.get_or_create(
-            email=staff_email, defaults={"full_name": "Demo Staff", "is_staff": True}
-        )
-        if created:
-            staff_user.set_password("staff-pass-123")
-            staff_user.save()
-        self.stdout.write(self._status_line("staff user", staff_email, created))
-
-        return demo_user
-
-    # ------------------------------------------------------------------
-    # Orders
-    # ------------------------------------------------------------------
-
-    def _seed_orders(self, demo_user, products_by_slug):
-        """
-        One demo order per workflow stage, each with realistic (and
-        varied — see DEMO_ORDER_LINES) line items so the staff order list
-        isn't the same single line repeated five times. Only created once
-        per stage (looked up by a fixed marker in payment_method) so
-        re-running the command doesn't keep piling up duplicate orders.
-        Totals are computed by the real order-total logic (recalculate_totals),
-        never hand-entered, so pricing stays server-authoritative.
-        """
-        from orders.services import recalculate_totals
-
-        any_created = False
-        for status in DEMO_ORDER_STATUSES:
-            marker = f"seed-demo:{status}"
-            if Order.objects.filter(user=demo_user, payment_method=marker).exists():
-                continue
-
-            order = Order.objects.create(
-                user=demo_user,
-                status=status,
-                payment_status=(
-                    Order.PaymentStatus.PAID if status != Order.Status.PENDING else Order.PaymentStatus.UNPAID
-                ),
-                payment_method=marker,
-                shipping_address="تهران، خیابان ولیعصر، پلاک ۱",
-                contact_phone="09120000000",
-            )
-            for stable_slug, quantity in DEMO_ORDER_LINES[status]:
-                product = products_by_slug[stable_slug]
-                OrderItem.objects.create(
-                    order=order,
+            # Deterministic variety: no random reordering between runs.
+            selected = candidates[:target_count]
+            for idx, item in enumerate(selected):
+                try:
+                    payload = _download_real_image(item["url"])
+                except CommandError as exc:
+                    self.stdout.write(self.style.WARNING(str(exc)))
+                    continue
+                ProductImage.objects.create(
                     product=product,
-                    product_name=product.name,
-                    unit_price=product.price,
-                    quantity=quantity,
+                    image=ContentFile(payload, name=f"seed-real-{stable_slug}-{idx+1}.jpg"),
+                    alt_text=f"{product.name} — تصویر مرتبط {idx+1}",
+                    sort_order=idx,
+                    is_primary=(idx == 0),
                 )
-            recalculate_totals(order)
-            any_created = True
+                report.append({"product": product.name, "source_url": item["source"],
+                               "file_title": item["title"], "license": item["license"],
+                               "artist": item["artist"]})
+            if product.images.count() < 3:
+                msg = f"Fewer than 3 images were downloaded for {product.name}."
+                if self.require_images:
+                    raise CommandError(msg + " Seed stopped rather than publishing an incomplete gallery.")
+                self.stdout.write(self.style.WARNING(msg + " Re-run seed_demo later to fill the gallery."))
+            self.stdout.write(self._status_line("product images", f"{product.name}: {product.images.count()} local images", True))
 
-        self.stdout.write(
-            self._status_line("demo orders", f"{len(DEMO_ORDER_STATUSES)} stage(s)", any_created)
-        )
-
-    # ------------------------------------------------------------------
-    # Site content (incl. intro video — see content/models.py)
-    # ------------------------------------------------------------------
+        try:
+            with open("seed-image-sources.json", "w", encoding="utf-8") as handle:
+                json.dump(report, handle, ensure_ascii=False, indent=2)
+        except OSError:
+            pass
 
     def _seed_content(self, media_map):
         content = SiteContent.load()
@@ -898,30 +604,29 @@ class Command(BaseCommand):
             content.hero_subtitle = "مستقیم از کندو تا خانه‌ی شما"
             changed = True
         if not content.hero_image_url or content.hero_image_url.startswith("/images/"):
-            content.hero_image_url = "/images/posters/media-hero.jpg"
+            content.hero_image_url = _media_url(media_map["media-hero"].file)
             changed = True
-        if not content.topbar_message:
-            content.topbar_message = "ارسال رایگان برای خریدهای بالای ۱ میلیون تومان"
+        if not content.topbar_message or "۱ میلیون" in content.topbar_message:
+            content.topbar_message = "ارسال رایگان برای خریدهای بالای ۱٫۵ میلیون تومان"
             content.topbar_is_active = True
             changed = True
-        if not content.contact_email:
-            content.contact_email = "info@nikahoney.local"
-            changed = True
-        if not content.contact_phone:
-            content.contact_phone = "021-00000000"
-            changed = True
-        if not content.contact_address:
-            content.contact_address = "تهران، ایران"
-            changed = True
-        if not content.social_instagram:
-            content.social_instagram = "https://instagram.com/nikahoney"
-            changed = True
-        if not content.social_telegram:
-            content.social_telegram = "https://t.me/nikahoney"
-            changed = True
-        if not content.social_whatsapp:
-            content.social_whatsapp = "https://wa.me/989120000000"
-            changed = True
+        # Canonical Nika Honey contact details: deliberately re-applied on
+        # every seed_demo run so the site/API/admin content stays in sync.
+        contact_defaults = {
+            "contact_email": "info@nikahoney.ir",
+            "contact_phone": "09365522762",
+            "contact_address": "استان گلستان، شهرستان کلاله، روستای یاساقلق",
+            "social_instagram": "https://www.instagram.com/Nika_honey1/",
+            "social_telegram": "https://t.me/Nika_honey1",
+            # WhatsApp links use the phone number; @handles are not a reliable
+            # universal WhatsApp destination.
+            "social_whatsapp": "https://wa.me/989365522762",
+            "social_rubika": "https://rubika.ir/Nika_honey1",
+        }
+        for field, value in contact_defaults.items():
+            if getattr(content, field) != value:
+                setattr(content, field, value)
+                changed = True
         if not content.footer_text:
             content.footer_text = "© عسل نیکا — همه حقوق محفوظ است."
             changed = True
@@ -936,7 +641,7 @@ class Command(BaseCommand):
             content.video_embed_url = "https://www.pexels.com/video/honey-bees-on-a-honeycomb-6872488/"
             changed = True
         if not content.video_poster_image_url or content.video_poster_image_url.startswith("/images/"):
-            content.video_poster_image_url = "/images/posters/media-about.jpg"
+            content.video_poster_image_url = _media_url(media_map["media-about"].file)
             changed = True
 
         if changed:
@@ -952,8 +657,7 @@ class Command(BaseCommand):
         changed_count = 0
         for post_data in BLOG_POSTS:
             media_key = BLOG_MEDIA_KEYS[post_data["slug"]]
-            # Static file shipped with the Next.js frontend — works on any host, no media storage needed.
-            cover_url = f"/images/posters/{media_key}.jpg"
+            cover_url = _media_url(media_map[media_key].file)
             post, created = BlogPost.objects.update_or_create(
                 slug=post_data["slug"],
                 defaults={
@@ -987,27 +691,22 @@ class Command(BaseCommand):
     # Media library
     # ------------------------------------------------------------------
 
-    def _seed_media(self, assets):
-        """Create/update the general media library from the downloaded posters."""
+    def _seed_media(self):
+        """Create/update deterministic general media with real local files."""
         media_map = {}
         created_count = 0
         updated_count = 0
 
         for asset_data in MEDIA_ASSETS:
             key = asset_data["key"]
-            payload = assets["posters"].get(key)
-            if payload is None:
-                raise CommandError(
-                    f"Poster '{key}' is not available (download failed and there is no local copy). "
-                    "Check your internet connection and run `python manage.py seed_demo` again."
-                )
-            real_stem = f"seed-real-{key}"
-            real_filename = f"{real_stem}.jpg"
+            real_filename = f"seed-real-{key}.jpg"
             asset = MediaAsset.objects.filter(label=asset_data["label"]).first()
+            desired_bytes = None
 
             if asset is None:
+                desired_bytes = _download_real_image(REAL_IMAGE_SOURCES[key])
                 asset = MediaAsset.objects.create(
-                    file=ContentFile(payload, name=real_filename),
+                    file=ContentFile(desired_bytes, name=real_filename),
                     label=asset_data["label"],
                     tag=asset_data["tag"],
                     alt_text=asset_data["alt_text"],
@@ -1016,25 +715,27 @@ class Command(BaseCommand):
                 created_count += 1
             else:
                 current_name = asset.file.name.split("/")[-1] if asset.file else ""
-                seed_managed = current_name.startswith(("seed-real-", "media-asset", "seed-"))
-                already_current = current_name.startswith(real_stem)
-                # User-uploaded files (names that don't look like seed files) are preserved.
-                if seed_managed and (not already_current or self.refresh):
-                    if asset.file:
-                        asset.file.delete(save=False)
-                    asset.file.save(real_filename, ContentFile(payload), save=False)
-                    asset.tag = asset_data["tag"]
-                    asset.alt_text = asset_data["alt_text"]
-                    asset.is_active = True
-                    asset.save()
-                    updated_count += 1
+                if current_name.startswith("seed-real-") or current_name.startswith("media-asset") or current_name.startswith("seed-"):
+                    # Existing seed-generated/demo media can be safely upgraded
+                    # to the real-photo files. User-uploaded files are preserved
+                    # when their names do not match a known seed-generated file.
+                    if current_name != real_filename:
+                        desired_bytes = _download_real_image(REAL_IMAGE_SOURCES[key])
+                        if asset.file:
+                            asset.file.delete(save=False)
+                        asset.file.save(real_filename, ContentFile(desired_bytes), save=False)
+                        asset.tag = asset_data["tag"]
+                        asset.alt_text = asset_data["alt_text"]
+                        asset.is_active = True
+                        asset.save()
+                        updated_count += 1
 
             media_map[key] = asset
 
         self.stdout.write(
             self._status_line(
                 "media assets",
-                f"{len(MEDIA_ASSETS)} downloaded poster(s), {created_count} created, {updated_count} upgraded",
+                f"{len(MEDIA_ASSETS)} real asset(s), {created_count} created, {updated_count} upgraded",
                 created_count > 0 or updated_count > 0,
             )
         )
@@ -1067,24 +768,6 @@ class Command(BaseCommand):
             settings_obj.notify_low_stock = True
             settings_obj.save()
         self.stdout.write(self._status_line("store settings", "shipping + toggles", created))
-
-    def _seed_addresses(self, demo_user):
-        """One deterministic default address for the demo customer, keyed
-        by title so re-running the command never duplicates it."""
-        created = False
-        if not Address.objects.filter(user=demo_user, title="منزل").exists():
-            Address.objects.create(
-                user=demo_user,
-                title="منزل",
-                city="ساری",
-                detail="خیابان طالقانی، کوچه بهار، پلاک ۱۲",
-                postal_code="4816715478",
-                is_default=True,
-            )
-            created = True
-        self.stdout.write(self._status_line("demo addresses", "1 address", created))
-
-    # ------------------------------------------------------------------
 
     def _status_line(self, kind, label, created):
         verb = "created" if created else "already up to date"

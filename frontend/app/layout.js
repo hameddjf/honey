@@ -10,9 +10,6 @@ export const metadata = {
   description:
     "عسل طبیعی نیکا؛ عسل خالص و بدون افزودنی، مستقیم از طبیعت برای سلامتی شما و عزیزانتان.",
   applicationName: SITE_NAME,
-  alternates: {
-    canonical: "/",
-  },
   icons: {
     icon: "/favicon.ico",
   },

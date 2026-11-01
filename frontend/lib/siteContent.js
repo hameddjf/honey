@@ -26,14 +26,14 @@ export const DEFAULT_SITE_CONTENT = {
   hero: {
     title: "عسل طبیعی نیکا",
     desc: "عسل خالص، بدون افزودنی، مستقیم از طبیعت\nبرای سلامتی شما و عزیزانتان",
-    image: "/images/posters/media-hero.jpg",
+    image: "https://images.pexels.com/photos/4480158/pexels-photo-4480158.jpeg?cs=srgb&dl=pexels-ian-panelo-4480158.jpg&fm=jpg",
     ctaLabel: "مشاهده محصولات",
     ctaHref: "/shop",
   },
   video: {
     label: "نمایش ویدئو",
     embedUrl: "",
-    posterImage: "/images/posters/media-bee.jpg",
+    posterImage: "https://images.pexels.com/photos/5247982/pexels-photo-5247982.jpeg?cs=srgb&dl=pexels-anete-lusina-5247982.jpg&fm=jpg",
   },
   promo: {
     enabled: false,
@@ -43,12 +43,13 @@ export const DEFAULT_SITE_CONTENT = {
   },
   footer: {
     tagline: "عسل طبیعی نیکا، هدیه‌ای از دل طبیعت برای سلامتی شما",
-    phone: "0912 123 4567",
+    phone: "09365522762",
     email: "info@nikahoney.ir",
-    address: "ایران، مازندران، ساری",
-    instagram: "#",
-    telegram: "#",
-    whatsapp: "#",
+    address: "استان گلستان، شهرستان کلاله، روستای یاساقلق",
+    instagram: "https://www.instagram.com/Nika_honey1/",
+    telegram: "https://t.me/Nika_honey1",
+    whatsapp: "https://wa.me/989365522762",
+    rubika: "https://rubika.ir/Nika_honey1",
   },
 };
 

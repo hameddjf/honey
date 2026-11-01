@@ -21,8 +21,8 @@ const DEFAULT_ADMIN_META = {
   forest: { stock: 6, featured: false, status: "active" },
   sunflower: { stock: 27, featured: false, status: "active" },
   blossom: { stock: 9, featured: false, status: "active" },
-  khareshtor: { stock: 14, featured: false, status: "active" },
-  mix: { stock: 3, featured: true, status: "active" },
+  "sunflower-honey": { stock: 40, featured: false, status: "active" },
+  "royal-jelly": { stock: 40, featured: true, status: "active" },
 };
 const FALLBACK_META = { category: PRODUCT_CATEGORIES[0], stock: 0, featured: false, status: "active" };
 

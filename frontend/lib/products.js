@@ -17,10 +17,12 @@ const SLUG_BY_NAME = {
   "عسل مرکبات": "citrus",
   "عسل کلزا": "sunflower",
   "عسل سیاه تلو": "dark",
+  "عسل جنگل (نمدار)": "forest",
   "عسل نمدار": "forest",
-  "عسل خارشتر": "khareshtor",
+  "عسلک ترنجبین": "blossom",
   "عسل ترنجبین": "blossom",
-  "عسل + ژل رویال": "mix",
+  "عسل آفتابگردان": "sunflower-honey",
+  "ژل رویال": "royal-jelly",
 };
 
 function toPersianDigits(str) {
@@ -77,14 +79,11 @@ export function mergeCosmetic(product) {
   // uploaded for them yet in /admin/products.
   const apiImages = Array.isArray(product.images) ? product.images : [];
   const sortedApiImages = [...apiImages].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
-  // Local (same-domain) images shipped in /public/images/products — these are
-  // used when the product has no uploaded images yet, and as a safety net
-  // (see data-fallback / onerror in the page templates) if an uploaded image's
-  // URL fails to load (e.g. backend media not reachable).
-  const fallbackImages = [cosmetic.image, cosmetic.imageDetail].filter(Boolean);
   const images = sortedApiImages.length
     ? sortedApiImages.map((img) => img.url)
-    : fallbackImages;
+    : cosmetic.image
+      ? [cosmetic.image]
+      : [];
   return {
     ...cosmetic,
     id: product.id,
@@ -111,8 +110,6 @@ export function mergeCosmetic(product) {
     // cosmetic image only when the product has none yet.
     images,
     image: images[0] || cosmetic.image,
-    fallbackImage: cosmetic.image || "",
-    fallbackImages,
   };
 }
 
@@ -134,45 +131,6 @@ export async function fetchProducts({ force = false } = {}) {
   }
   cache = { bySlug, list: Object.values(bySlug), slugs: Object.keys(bySlug) };
   return cache;
-}
-
-/**
- * کاتالوگ آفلاین (فقط داده‌ی تزئینی، بدون قیمت/موجودی زنده).
- * وقتی بک‌اند در دسترس نیست (لوکال بدون runserver، Render در حال بیدار شدن،
- * CORS و ...) به‌جای «لیست خالی» این را برمی‌گردانیم تا مودال صفحه‌ی اصلی و
- * صفحه‌ی محصول همچنان کار کنند. هرگز در cache ذخیره نمی‌شود تا با برگشتن
- * بک‌اند، بار بعد داده‌ی واقعی بیاید.
- */
-export function offlineCatalog() {
-  const bySlug = {};
-  for (const [slug, cosmetic] of Object.entries(COSMETIC_PRODUCTS)) {
-    const images = [cosmetic.image, cosmetic.imageDetail].filter(Boolean);
-    bySlug[slug] = {
-      ...cosmetic,
-      slug,
-      images,
-      image: cosmetic.image,
-      fallbackImage: cosmetic.image || "",
-      fallbackImages: images,
-      offline: true,
-    };
-  }
-  return { bySlug, list: Object.values(bySlug), slugs: Object.keys(bySlug), offline: true };
-}
-
-/**
- * مثل fetchProducts ولی هرگز throw نمی‌کند و هرگز لیست خالی نمی‌دهد:
- * اگر API خطا بدهد یا هیچ محصول فعالی نیاورد، کاتالوگ آفلاین برمی‌گردد.
- * صفحه‌های نمایشی (home / shop / product) باید از این استفاده کنند.
- */
-export async function fetchProductsSafe(opts) {
-  try {
-    const data = await fetchProducts(opts);
-    if (data && data.slugs && data.slugs.length) return data;
-  } catch {
-    // ignore — fall through to offline catalog
-  }
-  return offlineCatalog();
 }
 
 export function getCachedProducts() {

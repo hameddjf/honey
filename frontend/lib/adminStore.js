@@ -226,8 +226,8 @@ export const DEFAULT_SETTINGS = {
     name: "عسل طبیعی نیکا",
     ownerName: "مدیر فروشگاه",
     email: "info@nikahoney.ir",
-    phone: "0912 123 4567",
-    address: "ایران، مازندران، ساری",
+    phone: "09365522762",
+    address: "استان گلستان، شهرستان کلاله، روستای یاساقلق",
     currency: "تومان",
   },
   shipping: {

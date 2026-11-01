@@ -48,7 +48,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
     <ul class="topbar-social">
       <li><a href="${content.footer.instagram}" aria-label="اینستاگرام"><svg class="icon"><use href="#i-instagram"/></svg></a></li>
       <li><a href="${content.footer.telegram}" aria-label="تلگرام"><svg class="icon"><use href="#i-telegram"/></svg></a></li>
-      <li><a href="${content.footer.whatsapp}" aria-label="واتساپ"><svg class="icon"><use href="#i-whatsapp"/></svg></a></li>
+      <li><a href="${content.footer.rubika}" aria-label="روبیکا"><svg class="icon"><use href="#i-rubika"/></svg></a></li>
     </ul>
   </div>
 </div>
@@ -126,30 +126,32 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
       <span class="contact-info-icon"><svg class="icon"><use href="#i-phone"/></svg></span>
       <div>
         <h4>تماس تلفنی</h4>
-        <p>۰۲۱-۱۲۳۴۵۶۷۸<br>شنبه تا چهارشنبه، ۹ تا ۱۷</p>
+        <p><a href="tel:${content.footer.phone}" dir="ltr">${content.footer.phone}</a><br>برای هماهنگی، با ما تماس بگیرید.</p>
       </div>
     </div>
     <div class="contact-info-item">
       <span class="contact-info-icon"><svg class="icon"><use href="#i-mail"/></svg></span>
       <div>
         <h4>ایمیل</h4>
-        <p>info@nikahoney.ir</p>
+        <p><a href="mailto:${content.footer.email}">${content.footer.email}</a></p>
       </div>
     </div>
     <div class="contact-info-item">
       <span class="contact-info-icon"><svg class="icon"><use href="#i-pin"/></svg></span>
       <div>
-        <h4>آدرس دفتر</h4>
-        <p>تهران، خیابان ولیعصر، بالاتر از میدان ونک، پلاک ۱۲</p>
+        <h4>نشانی</h4>
+        <p>${content.footer.address}</p>
       </div>
     </div>
     <div class="contact-info-item">
       <div>
         <h4>ما را در شبکه‌های اجتماعی دنبال کنید</h4>
         <div class="contact-social-row">
-          <a href="#" class="icon-btn" aria-label="اینستاگرام"><svg class="icon"><use href="#i-instagram"/></svg></a>
-          <a href="#" class="icon-btn" aria-label="تلگرام"><svg class="icon"><use href="#i-telegram"/></svg></a>
-          <a href="#" class="icon-btn" aria-label="واتساپ"><svg class="icon"><use href="#i-whatsapp"/></svg></a>
+          <a href="${content.footer.instagram}" class="icon-btn" aria-label="اینستاگرام" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-instagram"/></svg></a>
+          <a href="${content.footer.telegram}" class="icon-btn" aria-label="تلگرام" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-telegram"/></svg></a>
+          <a href="${content.footer.whatsapp}" class="icon-btn" aria-label="واتساپ" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-whatsapp"/></svg></a>
+          <a href="${content.footer.rubika}" class="icon-btn" aria-label="روبیکا" target="_blank" rel="noopener noreferrer"><svg class="icon"><use href="#i-rubika"/></svg></a>
+          <a href="${content.footer.rubika}" class="icon-btn" aria-label="روبیکا" target="_blank" rel="noopener noreferrer">روبیکا</a>
         </div>
       </div>
     </div>
@@ -220,7 +222,9 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT) {
       <ul class="footer-social">
         <li><a href="${content.footer.instagram}" aria-label="اینستاگرام"><svg class="icon icon-sm"><use href="#i-instagram"/></svg></a></li>
         <li><a href="${content.footer.telegram}" aria-label="تلگرام"><svg class="icon icon-sm"><use href="#i-telegram"/></svg></a></li>
+        <li><a href="${content.footer.rubika}" aria-label="روبیکا"><svg class="icon icon-sm"><use href="#i-rubika"/></svg></a></li>
         <li><a href="${content.footer.whatsapp}" aria-label="واتساپ"><svg class="icon icon-sm"><use href="#i-whatsapp"/></svg></a></li>
+        <li><a href="${content.footer.rubika}" aria-label="روبیکا" target="_blank" rel="noopener noreferrer">روبیکا</a></li>
       </ul>
     </div>
 

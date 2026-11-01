@@ -95,12 +95,7 @@ a no-op on a fresh database.
 python manage.py seed_demo
 ```
 
-Creates the current honey catalog (categories + products), a demo
-customer (`demo@nikahoney.local` / `demo-pass-123`), a demo staff user
-(`staff@nikahoney.local` / `staff-pass-123`), one demo order per
-fulfillment stage for the demo customer, and default storefront content.
-Safe to re-run — it updates existing rows instead of duplicating them,
-and is dev/demo data only, never a source of production data.
+Creates/updates the real catalog (7 products with public slugs, 3–6 downloaded photos each), two sourced blog posts + the existing articles, media library, and storefront content/contact details. It creates **no users and no orders**. Create the admin yourself with `python manage.py createsuperuser`. Needs internet access (Wikimedia Commons + Pexels). Safe to re-run — it updates existing rows instead of duplicating them.
 
 ### 6. Run the development server
 

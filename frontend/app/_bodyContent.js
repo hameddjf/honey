@@ -64,7 +64,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
     <ul class="topbar-social">
       <li><a href="${content.footer.instagram}" aria-label="اینستاگرام"><svg class="icon"><use href="#i-instagram"/></svg></a></li>
       <li><a href="${content.footer.telegram}" aria-label="تلگرام"><svg class="icon"><use href="#i-telegram"/></svg></a></li>
-      <li><a href="${content.footer.whatsapp}" aria-label="واتساپ"><svg class="icon"><use href="#i-whatsapp"/></svg></a></li>
+      <li><a href="${content.footer.rubika}" aria-label="روبیکا"><svg class="icon"><use href="#i-rubika"/></svg></a></li>
     </ul>
   </div>
 </div>
@@ -126,7 +126,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
 <!-- ============ HERO ============ -->
 <section class="hero">
   <div class="hero-visual" aria-hidden="true">
-    <img class="hero-photo" src="${content.hero.image}" onerror="this.onerror=null;this.src='${DEFAULT_SITE_CONTENT.hero.image}';" alt="" loading="eager">
+    <img class="hero-photo" src="${content.hero.image}" alt="" loading="eager">
     <svg class="hero-flower hero-flower-1" viewBox="0 0 60 60"><g fill="#FFFDF6" stroke="#EADFC4" stroke-width="1"><ellipse cx="30" cy="16" rx="9" ry="13"/><ellipse cx="43" cy="24" rx="9" ry="13" transform="rotate(72 43 24)"/><ellipse cx="38" cy="40" rx="9" ry="13" transform="rotate(144 38 40)"/><ellipse cx="22" cy="40" rx="9" ry="13" transform="rotate(216 22 40)"/><ellipse cx="17" cy="24" rx="9" ry="13" transform="rotate(288 17 24)"/></g><circle cx="30" cy="30" r="7" fill="#E8B23D"/></svg>
     <svg class="hero-flower hero-flower-2" viewBox="0 0 60 60"><g fill="#FFFDF6" stroke="#EADFC4" stroke-width="1"><ellipse cx="30" cy="16" rx="9" ry="13"/><ellipse cx="43" cy="24" rx="9" ry="13" transform="rotate(72 43 24)"/><ellipse cx="38" cy="40" rx="9" ry="13" transform="rotate(144 38 40)"/><ellipse cx="22" cy="40" rx="9" ry="13" transform="rotate(216 22 40)"/><ellipse cx="17" cy="24" rx="9" ry="13" transform="rotate(288 17 24)"/></g><circle cx="30" cy="30" r="7" fill="#E8B23D"/></svg>
   </div>
@@ -187,15 +187,15 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
       <h3>عسل ترنجبین</h3>
       <a class="cat-dot" href="/product/blossom" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
     </article>
-    <article class="cat-card" data-product="khareshtor" tabindex="0">
-      <div class="cat-media cat-khareshtor"><a class="cat-media-link" href="/product/khareshtor" aria-label="مشاهده عسل خارشتر"><img src="${productImage("khareshtor")}" data-fallback="${productFallbackImage("khareshtor")}" alt="عسل خارشتر" loading="lazy" onerror="this.onerror=null;this.src=this.dataset.fallback;"></a><span class="cat-emoji">🌵</span></div>
-      <h3>عسل خارشتر</h3>
-      <a class="cat-dot" href="/product/khareshtor" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
+    <article class="cat-card" data-product="sunflower-honey" tabindex="0">
+      <div class="cat-media cat-sunflower"><a class="cat-media-link" href="/product/sunflower-honey" aria-label="مشاهده عسل آفتابگردان"><img src="${productImage("sunflower-honey")}" data-fallback="${productFallbackImage("sunflower-honey")}" alt="عسل آفتابگردان" loading="lazy" onerror="this.onerror=null;this.src=this.dataset.fallback;"></a><span class="cat-emoji">🌻</span></div>
+      <h3>عسل آفتابگردان</h3>
+      <a class="cat-dot" href="/product/sunflower-honey" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
     </article>
-    <article class="cat-card" data-product="mix" tabindex="0">
-      <div class="cat-media cat-mix"><a class="cat-media-link" href="/product/mix" aria-label="مشاهده عسل + ژل رویال"><img src="${productImage("mix")}" data-fallback="${productFallbackImage("mix")}" alt="عسل + ژل رویال" loading="lazy" onerror="this.onerror=null;this.src=this.dataset.fallback;"></a><span class="cat-emoji">✨</span></div>
-      <h3>عسل + ژل رویال</h3>
-      <a class="cat-dot" href="/product/mix" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
+    <article class="cat-card" data-product="royal-jelly" tabindex="0">
+      <div class="cat-media cat-mix"><a class="cat-media-link" href="/product/royal-jelly" aria-label="مشاهده ژل رویال"><img src="${productImage("royal-jelly")}" data-fallback="${productFallbackImage("royal-jelly")}" alt="ژل رویال" loading="lazy" onerror="this.onerror=null;this.src=this.dataset.fallback;"></a><span class="cat-emoji">✨</span></div>
+      <h3>ژل رویال</h3>
+      <a class="cat-dot" href="/product/royal-jelly" aria-label="مشاهده کامل جزئیات محصول"><svg class="icon icon-xs"><use href="#i-chev-left"/></svg></a>
     </article>
   </div>
 </section>
@@ -251,7 +251,7 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
     </div>
 
     <div class="about-media">
-      <img class="about-photo" src="${videoPoster}" onerror="this.onerror=null;this.src='${DEFAULT_SITE_CONTENT.video.posterImage}';" alt="تصویر زنبورداری و تولید عسل نیکا" loading="lazy">
+      <img class="about-photo" src="${videoPoster}" alt="تصویر زنبورداری و تولید عسل نیکا" loading="lazy">
       <button class="play-btn" data-video-url="${videoUrl}" aria-label="نمایش ویدئو">
         <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="rgba(26,20,12,.4)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#fff" stroke-width="2" opacity=".85"/><svg x="34" y="34" width="32" height="32"><use href="#i-play" fill="#fff"/></svg></svg>
       </button>
@@ -365,7 +365,9 @@ export default function buildBodyHTML(content = DEFAULT_SITE_CONTENT, productMap
       <ul class="footer-social">
         <li><a href="${content.footer.instagram}" aria-label="اینستاگرام"><svg class="icon icon-sm"><use href="#i-instagram"/></svg></a></li>
         <li><a href="${content.footer.telegram}" aria-label="تلگرام"><svg class="icon icon-sm"><use href="#i-telegram"/></svg></a></li>
+        <li><a href="${content.footer.rubika}" aria-label="روبیکا"><svg class="icon icon-sm"><use href="#i-rubika"/></svg></a></li>
         <li><a href="${content.footer.whatsapp}" aria-label="واتساپ"><svg class="icon icon-sm"><use href="#i-whatsapp"/></svg></a></li>
+        <li><a href="${content.footer.rubika}" aria-label="روبیکا" target="_blank" rel="noopener noreferrer">روبیکا</a></li>
       </ul>
     </div>
 

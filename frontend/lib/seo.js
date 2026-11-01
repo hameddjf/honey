@@ -78,7 +78,10 @@ export function productJsonLd({ name, description, image, url, priceValue, inSto
     },
   };
   if (image) data.image = image;
-  if (priceValue !== undefined && priceValue !== null) data.offers.price = String(priceValue);
+  // Prices are stored in toman; schema.org priceCurrency "IRR" is rial (1 toman = 10 rial).
+  if (priceValue !== undefined && priceValue !== null && !Number.isNaN(Number(priceValue))) {
+    data.offers.price = String(Math.round(Number(priceValue)) * 10);
+  }
   if (sku) data.sku = sku;
   return data;
 }

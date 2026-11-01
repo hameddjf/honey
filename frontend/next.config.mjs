@@ -24,6 +24,16 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
+  // Old product URLs of the previous catalog → their closest current page, so
+  // existing links/rankings are not lost. (Keep this list when the catalog changes.)
+  async redirects() {
+    return [
+      // «عسل خارشتر» is no longer sold; ترنجبین is the honeydew of the same plant.
+      { source: "/product/khareshtor", destination: "/product/blossom", permanent: true },
+      // «عسل + ژل رویال» combo was replaced by the standalone royal jelly product.
+      { source: "/product/mix", destination: "/product/royal-jelly", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

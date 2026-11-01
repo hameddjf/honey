@@ -13,9 +13,14 @@ from .base import *  # noqa: F401,F403
 
 DEBUG = False
 
-if SECRET_KEY == "insecure-dev-key-change-me":  # noqa: F405
+if (
+    SECRET_KEY.startswith(("insecure", "change-me"))  # noqa: F405
+    or len(SECRET_KEY) < 40  # noqa: F405
+):
     raise RuntimeError(
-        "DJANGO_SECRET_KEY must be set to a real secret in production."
+        "DJANGO_SECRET_KEY must be set to a real, random secret (>= 40 chars) in "
+        "production. Generate one with: "
+        "python -c \"import secrets; print(secrets.token_urlsafe(64))\""
     )
 
 if not ALLOWED_HOSTS:  # noqa: F405
@@ -39,11 +44,6 @@ if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":  # noqa: F
         "resolve to a postgresql:// / postgres:// connection string."
     )
 
-# Render (and most PaaS hosts) terminate TLS at their proxy and forward plain
-# HTTP to gunicorn with X-Forwarded-Proto. Without this, SECURE_SSL_REDIRECT
-# sees every request as insecure and redirects forever.
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
 SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "true").lower() == "true"
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -51,3 +51,32 @@ SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "0"))
 if SECURE_HSTS_SECONDS:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+
+# ---------------------------------------------------------------------------
+# Media files (product photos, banners, blog covers) -> Cloudflare R2 / any
+# S3-compatible bucket.
+#
+# Render's disk is ephemeral and Django does not serve /media/ when
+# DEBUG=False, so uploaded/seeded images MUST live in object storage.
+# Set all R2_* variables (see .env.example); when R2_BUCKET_NAME is unset the
+# app keeps using local MEDIA_ROOT (fine for a first smoke test only).
+# ---------------------------------------------------------------------------
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "")
+if R2_BUCKET_NAME:
+    _r2_public_domain = os.environ["R2_PUBLIC_DOMAIN"].strip().rstrip("/")  # e.g. media.nikahoney.ir
+    STORAGES["default"] = {  # noqa: F405
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": R2_BUCKET_NAME,
+            "endpoint_url": os.environ["R2_ENDPOINT_URL"],  # https://<account-id>.r2.cloudflarestorage.com
+            "access_key": os.environ["R2_ACCESS_KEY_ID"],
+            "secret_key": os.environ["R2_SECRET_ACCESS_KEY"],
+            "region_name": "auto",
+            "custom_domain": _r2_public_domain,
+            "url_protocol": "https:",
+            "querystring_auth": False,
+            "file_overwrite": False,
+        },
+    }
+    MEDIA_URL = f"https://{_r2_public_domain}/"

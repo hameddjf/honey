@@ -1,5 +1,6 @@
 import { SITE_URL } from "@/lib/seo";
 import { PRODUCT_SLUGS } from "@/lib/products";
+import { serverFetchJson } from "@/lib/serverApi";
 import { fetchBlogPosts } from "@/lib/api/blog";
 
 // Computed per-request (not at build time) so the blog-post list can come
@@ -30,9 +31,15 @@ export default async function sitemap() {
     priority: p.priority,
   }));
 
-  const productEntries = PRODUCT_SLUGS.map((slug) => ({
+  // Live catalog (slug + real updated_at); falls back to the offline slug list.
+  const live = await serverFetchJson("/products/?page_size=100", { revalidate: 600 });
+  const liveProducts = (live?.results || []).filter((p) => p.is_active !== false && p.slug);
+  const productEntries = (liveProducts.length
+    ? liveProducts.map((p) => ({ slug: p.slug, lastModified: p.updated_at ? new Date(p.updated_at) : now }))
+    : PRODUCT_SLUGS.map((slug) => ({ slug, lastModified: now }))
+  ).map(({ slug, lastModified }) => ({
     url: `${SITE_URL}/product/${slug}`,
-    lastModified: now,
+    lastModified,
     changeFrequency: "weekly",
     priority: 0.8,
   }));

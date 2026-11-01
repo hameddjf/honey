@@ -22,6 +22,7 @@ export function toBackendPayload(content) {
     social_instagram: normalizeUrl(content.footer.instagram),
     social_telegram: normalizeUrl(content.footer.telegram),
     social_whatsapp: normalizeUrl(content.footer.whatsapp),
+    social_rubika: normalizeUrl(content.footer.rubika),
     footer_text: content.footer.tagline,
     promo_message: content.promo.message,
     promo_is_active: !!content.promo.enabled,
@@ -37,27 +38,10 @@ function normalizeUrl(value) {
   return value;
 }
 
-/**
- * پوسترها: اگر بک‌اند آدرس مطلق به یک فایل استاتیک فرانت‌اند داده باشد
- * (مثل http://127.0.0.1:8000/images/posters/x.jpg) میزبان را حذف می‌کنیم تا از
- * خود Next.js (public/images) لود شود؛ مقدار خالی هم undefined می‌شود تا
- * تصویر پیش‌فرض جایگزین نشود.
- */
-export function localizeImageUrl(value) {
-  if (!value || typeof value !== "string") return undefined;
-  try {
-    const u = new URL(value, "http://placeholder.local");
-    if (u.pathname.startsWith("/images/")) return u.pathname;
-  } catch {
-    /* ignore */
-  }
-  return value;
-}
-
 /** Backend SiteContent -> a partial patch of the local shape (merge onto DEFAULT_SITE_CONTENT). */
 export function fromBackendPayload(data) {
   return {
-    hero: { title: data.hero_title, desc: data.hero_subtitle, image: localizeImageUrl(data.hero_image_url) },
+    hero: { title: data.hero_title, desc: data.hero_subtitle, image: data.hero_image_url },
     topbar: { message: data.topbar_message, active: !!data.topbar_is_active },
     footer: {
       email: data.contact_email,
@@ -66,13 +50,14 @@ export function fromBackendPayload(data) {
       instagram: data.social_instagram,
       telegram: data.social_telegram,
       whatsapp: data.social_whatsapp,
+      rubika: data.social_rubika,
       tagline: data.footer_text,
     },
     promo: { message: data.promo_message, enabled: data.promo_is_active },
     video: {
       label: data.video_label,
       embedUrl: data.video_embed_url,
-      posterImage: localizeImageUrl(data.video_poster_image_url),
+      posterImage: data.video_poster_image_url,
     },
   };
 }

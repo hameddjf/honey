@@ -40,6 +40,7 @@ class SiteContent(TimeStampedModel):
     social_instagram = models.URLField(blank=True)
     social_telegram = models.URLField(blank=True)
     social_whatsapp = models.URLField(blank=True)
+    social_rubika = models.URLField(blank=True)
 
     # Footer
     footer_text = models.CharField(max_length=300, blank=True)

@@ -46,7 +46,7 @@ const bodyHTML = `
     <ul class="topbar-social">
       <li><a href="${DEFAULT_SITE_CONTENT.footer.instagram}" aria-label="اینستاگرام"><svg class="icon"><use href="#i-instagram"/></svg></a></li>
       <li><a href="${DEFAULT_SITE_CONTENT.footer.telegram}" aria-label="تلگرام"><svg class="icon"><use href="#i-telegram"/></svg></a></li>
-      <li><a href="${DEFAULT_SITE_CONTENT.footer.whatsapp}" aria-label="واتساپ"><svg class="icon"><use href="#i-whatsapp"/></svg></a></li>
+      <li><a href="${DEFAULT_SITE_CONTENT.footer.rubika}" aria-label="روبیکا"><svg class="icon"><use href="#i-rubika"/></svg></a></li>
     </ul>
   </div>
 </div>
@@ -209,6 +209,7 @@ const bodyHTML = `
       <ul class="footer-social">
         <li><a href="${DEFAULT_SITE_CONTENT.footer.instagram}" aria-label="اینستاگرام"><svg class="icon icon-sm"><use href="#i-instagram"/></svg></a></li>
         <li><a href="${DEFAULT_SITE_CONTENT.footer.telegram}" aria-label="تلگرام"><svg class="icon icon-sm"><use href="#i-telegram"/></svg></a></li>
+        <li><a href="${DEFAULT_SITE_CONTENT.footer.rubika}" aria-label="روبیکا"><svg class="icon icon-sm"><use href="#i-rubika"/></svg></a></li>
         <li><a href="${DEFAULT_SITE_CONTENT.footer.whatsapp}" aria-label="واتساپ"><svg class="icon icon-sm"><use href="#i-whatsapp"/></svg></a></li>
       </ul>
     </div>

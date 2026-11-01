@@ -138,7 +138,7 @@ export default function InvoiceDetailClient({ orderNumber }) {
                 <p>
                   عسل طبیعی نیکا
                   <br />
-                  ایران، مازندران، ساری
+                  استان گلستان، شهرستان کلاله، روستای یاساقلق
                   <br />
                   روش پرداخت: {PAYMENT_METHOD_LABEL[order.payment_method] || "—"}
                   <br />
